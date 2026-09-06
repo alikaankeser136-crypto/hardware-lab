@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Lab - Admin Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #090d16; color: #f8fafc; padding: 30px 20px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #38bdf8; text-align: center; margin-bottom: 20px; }
+        .box { background: rgba(22, 30, 49, 0.8); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 16px; margin-bottom: 25px; }
+        .status-box { display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(56, 189, 248, 0.2); }
+        h2 { margin-top: 0; color: #c084fc; font-size: 1.2rem; }
+        form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: #0a0f1d; color: #fff; font-family: inherit; }
+        button.add-btn { background: #0284c7; color: white; font-weight: bold; border: none; cursor: pointer; }
+        button.add-btn:hover { background: #0369a1; }
+        button.toggle-btn { padding: 12px 24px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+        .item-list { margin-top: 15px; display: grid; gap: 8px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: rgba(10, 15, 29, 0.6); padding: 10px 15px; border-radius: 8px; font-size: 0.9rem; }
+        button.del-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #94a3b8; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Hardware Lab Admin Paneli</h1>
+
+        <!-- Site Kapatma / Açma Modülü -->
+        <div class="box status-box">
+            <div>
+                <h3 style="margin: 0; font-size: 1.1rem;">Site Durumu: <span id="siteStatusText">Yükleniyor...</span></h3>
+                <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #94a3b8;">Siteyi bakıma alarak ziyaretçilere geçici kapatabilirsiniz.</p>
+            </div>
+            <form action="/admin/toggle-maintenance" method="POST" style="display: block;">
+                <button type="submit" id="toggleBtn" class="toggle-btn">Yükleniyor...</button>
+            </form>
+        </div>
+
+        <!-- GPU Ekleme -->
+        <div class="box">
+            <h2>🎮 Yeni Ekran Kartı (GPU) Ekle</h2>
+            <form action="/admin/add-gpu" method="POST">
+                <input type="text" name="isim" placeholder="Model (Örn: RTX 5090)" required>
+                <input type="number" name="puan" placeholder="Puan (Örn: 45000)" required>
+                <select name="marka">
+                    <option value="nvidia">NVIDIA</option>
+                    <option value="amd">AMD</option>
+                    <option value="intel">Intel</option>
+                </select>
+                <input type="text" name="vram" placeholder="VRAM (Örn: 24 GB)" required>
+                <input type="text" name="fiyat_performans" placeholder="F/P (Örn: 8.5/10)" required>
+                <button type="submit" class="add-btn">+ GPU Ekle</button>
+            </form>
+            <div id="gpuList" class="item-list"></div>
+        </div>
+
+        <!-- CPU Ekleme -->
+        <div class="box">
+            <h2>⚡ Yeni İşlemci (CPU) Ekle</h2>
+            <form action="/admin/add-cpu" method="POST">
+                <input type="text" name="isim" placeholder="Model (Örn: Ryzen 9 9900X)" required>
+                <input type="number" name="puan" placeholder="Puan (Örn: 42000)" required>
+                <select name="marka">
+                    <option value="amd">AMD</option>
+                    <option value="intel">Intel</option>
+                </select>
+                <input type="text" name="cekirdek" placeholder="Çekirdek (Örn: 12 Çekirdek)" required>
+                <input type="text" name="fiyat_performans" placeholder="F/P (Örn: 9/10)" required>
+                <button type="submit" class="add-btn">+ CPU Ekle</button>
+            </form>
+            <div id="cpuList" class="item-list"></div>
+        </div>
+
+        <a href="/" class="back-link">← Ana Sayfaya Dön</a>
+    </div>
+
+    <script>
+        async function yukle() {
+            // Bakım Durumu
+            const resBakim = await fetch('/api/admin/bakim-durumu');
+            const dataBakim = await resBakim.json();
+            const isBakim = dataBakim.bakim === "1";
+            
+            const statusText = document.getElementById('siteStatusText');
+            const toggleBtn = document.getElementById('toggleBtn');
+            
+            if (isBakim) {
+                statusText.innerHTML = '<span style="color: #f87171;">🛠️ BAKIMDA (KAPALI)</span>';
+                toggleBtn.innerText = '🟢 Siteyi Yayına Al (Aç)';
+                toggleBtn.style.background = '#22c55e';
+            } else {
+                statusText.innerHTML = '<span style="color: #4ade80;">🟢 YAYINDA (AÇIK)</span>';
+                toggleBtn.innerText = '🔴 Siteyi Bakıma Al (Kapat)';
+                toggleBtn.style.background = '#ef4444';
+            }
+
+            // GPU Listesi
+            const resGpu = await fetch('/api/gpus');
+            const gpus = await resGpu.json();
+            document.getElementById('gpuList').innerHTML = gpus.map(g => `
+                <div class="item-row">
+                    <span><strong>${g.isim}</strong> - ${g.puan} Puan (${g.vram})</span>
+                    <form action="/admin/delete-gpu/${g.id}" method="POST" style="display:inline;">
+                        <button type="submit" class="del-btn">Sil</button>
+                    </form>
+                </div>
+            `).join('');
+
+            // CPU Listesi
+            const resCpu = await fetch('/api/cpus');
+            const cpus = await resCpu.json();
+            document.getElementById('cpuList').innerHTML = cpus.map(c => `
+                <div class="item-row">
+                    <span><strong>${c.isim}</strong> - ${c.puan} Puan (${c.cekirdek})</span>
+                    <form action="/admin/delete-cpu/${c.id}" method="POST" style="display:inline;">
+                        <button type="submit" class="del-btn">Sil</button>
+                    </form>
+                </div>
+            `).join('');
+        }
+        yukle();
+    </script>
+</body>
+</html>
