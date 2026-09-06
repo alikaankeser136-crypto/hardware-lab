@@ -1,16 +1,34 @@
-from fastapi import FastAPI, HTTPException, Form, Depends, status
+import os
+import secrets
+from fastapi import FastAPI, HTTPException, Form, Depends, Request, status
 from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from starlette.middleware.sessions import SessionMiddleware
+from authlib.integrations.starlette_client import OAuth
+
 from database import get_db_connection, init_db
-import secrets
 
 app = FastAPI()
+
+# Session Middleware (OAuth state doğrulaması ve oturum tutmak için)
+# Gerçek ortamda secret_key değerini gizli tutmalısın.
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "super-secret-key-hardware-lab"))
+
+# OAuth Yapılandırması
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
 security = HTTPBasic()
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-# Önbelleği (Cache) Tamamen Engelleyen Header'lar
 NO_CACHE_HEADERS = {
     "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
     "Pragma": "no-cache",
@@ -37,6 +55,39 @@ def is_in_maintenance():
 @app.on_event("startup")
 def startup_event():
     init_db()
+
+# --- GOOGLE AUTH ROTALARI ---
+
+@app.get("/login/google")
+async def login_via_google(request: Request):
+    # Google Console'da belirttiğin callback adresiyle uyumlu şekilde yönlendirir
+    redirect_uri = request.url_for('auth_google_callback')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@app.get("/auth/google/callback", name="auth_google_callback")
+async def auth_google_callback(request: Request):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get('userinfo')
+        if user_info:
+            request.session['user'] = dict(user_info)
+        return RedirectResponse(url="/", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Giriş hatası: {str(e)}")
+
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.pop('user', None)
+    return RedirectResponse(url="/", status_code=303)
+
+@app.get("/api/me")
+async def get_current_user(request: Request):
+    user = request.session.get('user')
+    if user:
+        return {"authenticated": True, "user": user}
+    return {"authenticated": False}
+
+# --- ANA SAYFA & DİĞER ROTALAR ---
 
 @app.get("/")
 def home():
