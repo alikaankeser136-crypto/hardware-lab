@@ -8,7 +8,6 @@
     <style>
         body { background-color: #0f172a; color: #f8fafc; }
         .card { background-color: #1e293b; border-color: #334155; color: #f8fafc; }
-        .star-rating { color: #f59e0b; cursor: pointer; font-size: 1.25rem; }
         .nav-link { color: #94a3b8; }
         .nav-link.active { color: #38bdf8 !important; border-bottom: 2px solid #38bdf8; }
     </style>
@@ -18,20 +17,14 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
     <div class="container">
         <a class="navbar-brand fw-bold text-info" href="#">Hardware Lab</a>
-        <div class="d-flex align-items-center">
-            {% if user %}
-                <img src="{{ user.picture }}" class="rounded-circle me-2" width="32" height="32" alt="Avatar">
-                <span class="me-3">{{ user.name }}</span>
-                <a href="/logout" class="btn btn-outline-danger btn-sm">Çıkış Yap</a>
-            {% else %}
-                <a href="/login/google" class="btn btn-outline-light btn-sm">Google ile Giriş Yap</a>
-            {% endif %}
+        <div id="authContainer" class="d-flex align-items-center">
+            <!-- JavaScript burayı oturum durumuna göre dolduracak -->
+            <span class="text-muted small">Yükleniyor...</span>
         </div>
     </div>
 </nav>
 
 <div class="container my-4">
-    <!-- Tab Navigasyonu -->
     <ul class="nav nav-tabs mb-4 border-secondary" id="myTab" role="tablist">
         <li class="nav-item">
             <button class="nav-link active" id="compare-tab" data-bs-toggle="tab" data-bs-target="#compare-panel" type="button">Karşılaştırma</button>
@@ -51,9 +44,6 @@
                     <label class="form-label">1. Bileşen</label>
                     <select id="item1-select" class="form-select bg-dark text-white border-secondary">
                         <option value="">Seçiniz...</option>
-                        {% for item in hardware_list %}
-                            <option value="{{ item.id }}">[{{ item.category }}] {{ item.name }}</option>
-                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end justify-content-center">
@@ -63,14 +53,11 @@
                     <label class="form-label">2. Bileşen</label>
                     <select id="item2-select" class="form-select bg-dark text-white border-secondary">
                         <option value="">Seçiniz...</option>
-                        {% for item in hardware_list %}
-                            <option value="{{ item.id }}">[{{ item.category }}] {{ item.name }}</option>
-                        {% endfor %}
                     </select>
                 </div>
             </div>
 
-            <div id="compare-result" class="row display-none">
+            <div id="compare-result" class="row">
                 <div class="col-md-6">
                     <div class="card p-3" id="card-item1"></div>
                 </div>
@@ -80,30 +67,16 @@
             </div>
         </div>
 
-        <!-- Donanım Listesi ve Yorum Paneli -->
+        <!-- Donanım Listesi -->
         <div class="tab-pane fade" id="list-panel">
             <h3 class="mb-3 text-info">Tüm Donanımlar</h3>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                {% for item in hardware_list %}
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <span class="badge bg-secondary mb-2">{{ item.category }}</span>
-                            <h5 class="card-title">{{ item.name }}</h5>
-                            <p class="card-text text-muted">{{ item.specs }}</p>
-                            <p class="fw-bold text-success">Performans Puanı: {{ item.score }}</p>
-                            <button class="btn btn-outline-info btn-sm w-100" onclick="openReviewModal({{ item.id }}, '{{ item.name }}')">Yorumlar & Puan Ver</button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+            <div id="hardwareList" class="row row-cols-1 row-cols-md-3 g-4"></div>
         </div>
 
     </div>
 </div>
 
-<!-- Yorum ve Yıldız Verme Modalı -->
+<!-- Yorum Modalı -->
 <div class="modal fade" id="reviewModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-white border-secondary">
@@ -112,27 +85,12 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="modalItemType">
                 <input type="hidden" id="modalItemId">
                 
-                {% if user %}
-                <div class="mb-3 card p-2 bg-secondary bg-opacity-10 border-secondary">
-                    <h6>Yorum Yap ve Yıldız Ver</h6>
-                    <div class="mb-2">
-                        <label class="form-label">Yıldız:</label>
-                        <select id="ratingSelect" class="form-select form-select-sm bg-dark text-white border-secondary w-auto d-inline-block ms-2">
-                            <option value="5">5 ⭐⭐⭐⭐⭐</option>
-                            <option value="4">4 ⭐⭐⭐⭐</option>
-                            <option value="3">3 ⭐⭐⭐</option>
-                            <option value="2">2 ⭐⭐</option>
-                            <option value="1">1 ⭐</option>
-                        </select>
-                    </div>
-                    <textarea id="commentText" class="form-textarea form-control bg-dark text-white border-secondary mb-2" rows="2" placeholder="Düşüncelerinizi yazın..."></textarea>
-                    <button class="btn btn-info btn-sm" onclick="submitReview()">Gönder</button>
+                <div id="reviewFormArea" class="mb-3 card p-2 bg-secondary bg-opacity-10 border-secondary">
+                    <!-- Giriş durumuna göre yorum formu gelecek -->
                 </div>
-                {% else %}
-                <div class="alert alert-warning py-2">Yorum yapabilmek için lütfen Google hesabınızla giriş yapın.</div>
-                {% endif %}
 
                 <hr class="border-secondary">
                 <h6>Kullanıcı Yorumları</h6>
@@ -144,96 +102,216 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-async function compareHardware() {
-    const id1 = document.getElementById('item1-select').value;
-    const id2 = document.getElementById('item2-select').value;
+let currentUser = null;
+let allGpus = [];
+let allCpus = [];
 
-    if(!id1 || !id2) {
-        alert("Lütfen karşılaştırmak için iki bileşen seçin.");
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkUser();
+    await loadHardwareData();
+});
+
+// Oturum Durumunu Kontrol Et
+async function checkUser() {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    const authContainer = document.getElementById('authContainer');
+    const reviewFormArea = document.getElementById('reviewFormArea');
+
+    if (data.authenticated) {
+        currentUser = data.user;
+        authContainer.innerHTML = `
+            <img src="${currentUser.picture}" class="rounded-circle me-2" width="32" height="32" alt="">
+            <span class="me-3">${currentUser.name}</span>
+            <a href="/logout" class="btn btn-outline-danger btn-sm">Çıkış Yap</a>
+        `;
+        reviewFormArea.innerHTML = `
+            <h6>Yorum Yap ve Yıldız Ver</h6>
+            <div class="mb-2">
+                <label class="form-label">Yıldız:</label>
+                <select id="ratingSelect" class="form-select form-select-sm bg-dark text-white border-secondary w-auto d-inline-block ms-2">
+                    <option value="5">5 ⭐⭐⭐⭐⭐</option>
+                    <option value="4">4 ⭐⭐⭐⭐</option>
+                    <option value="3">3 ⭐⭐⭐</option>
+                    <option value="2">2 ⭐⭐</option>
+                    <option value="1">1 ⭐</option>
+                </select>
+            </div>
+            <textarea id="commentText" class="form-control bg-dark text-white border-secondary mb-2" rows="2" placeholder="Düşüncelerinizi yazın..."></textarea>
+            <button class="btn btn-info btn-sm" onclick="submitReview()">Gönder</button>
+        `;
+    } else {
+        authContainer.innerHTML = `<a href="/login/google" class="btn btn-outline-light btn-sm">Google ile Giriş Yap</a>`;
+        reviewFormArea.innerHTML = `<div class="alert alert-warning py-2 mb-0">Yorum yapabilmek için lütfen Google hesabınızla giriş yapın.</div>`;
+    }
+}
+
+// Donanım Verilerini Yükle
+async function loadHardwareData() {
+    const [gpuRes, cpuRes] = await Promise.all([
+        fetch('/api/gpus'),
+        fetch('/api/cpus')
+    ]);
+
+    allGpus = await gpuRes.json();
+    allCpus = await cpuRes.json();
+
+    const select1 = document.getElementById('item1-select');
+    const select2 = document.getElementById('item2-select');
+    const listContainer = document.getElementById('hardwareList');
+
+    select1.innerHTML = '<option value="">Seçiniz...</option>';
+    select2.innerHTML = '<option value="">Seçiniz...</option>';
+    listContainer.innerHTML = '';
+
+    // GPU Seçenekleri
+    allGpus.forEach(gpu => {
+        select1.innerHTML += `<option value="gpu:${gpu.isim}">[GPU] ${gpu.isim}</option>`;
+        select2.innerHTML += `<option value="gpu:${gpu.isim}">[GPU] ${gpu.isim}</option>`;
+        
+        listContainer.innerHTML += `
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <span class="badge bg-primary mb-2">GPU</span>
+                        <h5 class="card-title">${gpu.isim}</h5>
+                        <p class="card-text text-muted">VRAM: ${gpu.vram} | F/P: ${gpu.fiyat_performans}</p>
+                        <p class="fw-bold text-success">Puan: ${gpu.puan}</p>
+                        <button class="btn btn-outline-info btn-sm w-100" onclick="openReviewModal('gpu', ${gpu.id}, '${gpu.isim}')">Yorumlar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    // CPU Seçenekleri
+    allCpus.forEach(cpu => {
+        select1.innerHTML += `<option value="cpu:${cpu.isim}">[CPU] ${cpu.isim}</option>`;
+        select2.innerHTML += `<option value="cpu:${cpu.isim}">[CPU] ${cpu.isim}</option>`;
+
+        listContainer.innerHTML += `
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <span class="badge bg-purple bg-warning text-dark mb-2">CPU</span>
+                        <h5 class="card-title">${cpu.isim}</h5>
+                        <p class="card-text text-muted">Çekirdek: ${cpu.cekirdek} | F/P: ${cpu.fiyat_performans}</p>
+                        <p class="fw-bold text-success">Puan: ${cpu.puan}</p>
+                        <button class="btn btn-outline-info btn-sm w-100" onclick="openReviewModal('cpu', ${cpu.id}, '${cpu.isim}')">Yorumlar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// Karşılaştırma
+async function compareHardware() {
+    const val1 = document.getElementById('item1-select').value;
+    const val2 = document.getElementById('item2-select').value;
+
+    if (!val1 || !val2) {
+        alert("Lütfen iki bileşen seçin.");
         return;
     }
 
-    const res = await fetch(`/api/compare?id1=${id1}&id2=${id2}`);
-    if(res.ok) {
+    const [type1, name1] = val1.split(':');
+    const [type2, name2] = val2.split(':');
+
+    if (type1 !== type2) {
+        alert("Lütfen aynı kategorideki (iki GPU veya iki CPU) bileşenleri karşılaştırın.");
+        return;
+    }
+
+    const endpoint = type1 === 'gpu' ? `/api/karsilastir?gpu1=${name1}&gpu2=${name2}` : `/api/karsilastir/cpu?cpu1=${name1}&cpu2=${name2}`;
+    const res = await fetch(endpoint);
+    
+    if (res.ok) {
         const data = await res.json();
-        renderCompareCard('card-item1', data.item1);
-        renderCompareCard('card-item2', data.item2);
+        const obj1 = data.kart_1 || data.cpu_1;
+        const obj2 = data.kart_2 || data.cpu_2;
+
+        renderCard('card-item1', obj1, type1);
+        renderCard('card-item2', obj2, type2);
     }
 }
 
-function renderCompareCard(elementId, item) {
+function renderCard(elementId, item, type) {
     document.getElementById(elementId).innerHTML = `
-        <span class="badge bg-primary mb-2">${item.category} - ${item.brand}</span>
-        <h4>${item.name}</h4>
+        <span class="badge bg-secondary mb-2">${type.toUpperCase()} - ${item.marka}</span>
+        <h4>${item.isim}</h4>
         <hr class="border-secondary">
-        <p><strong>Özellikler:</strong> ${item.specs}</p>
-        <p><strong>Benchmark Puanı:</strong> ${item.score}</p>
-        <p><strong>Ortalama Yıldız:</strong> ⭐ ${item.rating.toFixed(1)} / 5.0</p>
+        <p><strong>Detay:</strong> ${item.vram || item.cekirdek}</p>
+        <p><strong>Performans Puanı:</strong> ${item.puan}</p>
+        <p><strong>Fiyat/Performans:</strong> ${item.fiyat_performans}</p>
     `;
 }
 
+// Yorum Modalı İşlemleri
 let reviewModal;
-async function openReviewModal(id, name) {
+async function openReviewModal(type, id, name) {
+    document.getElementById('modalItemType').value = type;
     document.getElementById('modalItemId').value = id;
     document.getElementById('modalItemTitle').innerText = name + " - Yorumlar";
-    
-    await loadReviews(id);
-    
-    if(!reviewModal) {
+
+    await loadReviews(type, id);
+
+    if (!reviewModal) {
         reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
     }
     reviewModal.show();
 }
 
-async function loadReviews(id) {
-    const res = await fetch(`/api/hardware/${id}`);
-    if(res.ok) {
-        const data = await res.json();
-        const listContainer = document.getElementById('reviewsList');
-        listContainer.innerHTML = '';
-        
-        if(data.reviews.length === 0) {
-            listContainer.innerHTML = '<p class="text-muted small">Henüz yorum yapılmamış.</p>';
-            return;
-        }
+async function loadReviews(type, id) {
+    const res = await fetch(`/api/yorumlar/${type}/${id}`);
+    const reviews = await res.json();
+    const listContainer = document.getElementById('reviewsList');
+    listContainer.innerHTML = '';
 
-        data.reviews.forEach(r => {
-            listContainer.innerHTML += `
-                <div class="border-bottom border-secondary pb-2 mb-2">
-                    <div class="d-flex align-items-center mb-1">
-                        <img src="${r.user_picture}" class="rounded-circle me-2" width="20" height="20" alt="">
-                        <strong class="small me-auto">${r.user_name}</strong>
-                        <span class="text-warning small">⭐ ${r.rating}/5</span>
-                    </div>
-                    <p class="mb-0 small text-light">${r.comment}</p>
-                </div>
-            `;
-        });
+    if (reviews.length === 0) {
+        listContainer.innerHTML = '<p class="text-muted small">Henüz yorum yapılmamış.</p>';
+        return;
     }
+
+    reviews.forEach(r => {
+        listContainer.innerHTML += `
+            <div class="border-bottom border-secondary pb-2 mb-2">
+                <div class="d-flex align-items-center mb-1">
+                    <img src="${r.user_picture}" class="rounded-circle me-2" width="20" height="20" alt="">
+                    <strong class="small me-auto">${r.user_name}</strong>
+                    <span class="text-warning small">⭐ ${r.yildiz}/5</span>
+                </div>
+                <p class="mb-0 small text-light">${r.yorum}</p>
+            </div>
+        `;
+    });
 }
 
 async function submitReview() {
+    const type = document.getElementById('modalItemType').value;
     const id = document.getElementById('modalItemId').value;
     const rating = document.getElementById('ratingSelect').value;
     const comment = document.getElementById('commentText').value;
 
-    if(!comment) {
-        alert("Lütfe bir yorum yazın.");
+    if (!comment) {
+        alert("Lütfen yorum yazın.");
         return;
     }
 
     const formData = new FormData();
-    formData.append('rating', rating);
-    formData.append('comment', comment);
+    formData.append('parca_tipi', type);
+    formData.append('parca_id', id);
+    formData.append('yildiz', rating);
+    formData.append('yorum', comment);
 
-    const res = await fetch(`/api/hardware/${id}/review`, {
+    const res = await fetch('/api/yorum-ekle', {
         method: 'POST',
         body: formData
     });
 
-    if(res.ok) {
+    if (res.ok) {
         document.getElementById('commentText').value = '';
-        loadReviews(id);
+        loadReviews(type, id);
     } else {
         alert("Yorum gönderilemedi.");
     }
