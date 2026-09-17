@@ -1,206 +1,168 @@
 import os
-import json
-from fastapi import FastAPI, Depends, HTTPException, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+import secrets
+from fastapi import FastAPI, HTTPException, Form, Depends, Request, status
+from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth
-from pydantic import BaseModel
 
-from database import SessionLocal, init_db, HardwareItem, Review, User
+from database import get_db_connection, init_db
 
 app = FastAPI(title="Hardware Lab")
 
-# Oturum yönetimi
-app.add_middleware(SessionMiddleware, secret_key=os.environ.get("SECRET_KEY", "hardware-lab-secret-key-12345"))
+# Session Middleware (Google OAuth ve Oturum için)
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "hardware-lab-super-secret-key-12345"))
 
-# Veritabanı tablolarını oluştur
-init_db()
+# Database ilklendirme
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 # Google OAuth Yapılandırması
 oauth = OAuth()
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "dummy_id")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "dummy_secret")
-
 oauth.register(
     name='google',
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
+    client_id=os.getenv("GOOGLE_CLIENT_ID", "dummy_id"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET", "dummy_secret"),
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
 
-# Template Dizini
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-templates = Jinja2Templates(directory=BASE_DIR)
+security = HTTPBasic()
+ADMIN_USER = "admin"
+ADMIN_PASS = "1234"
 
-def get_db():
-    db = SessionLocal()
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
+
+def check_admin(credentials: HTTPBasicCredentials = Depends(security)):
+    is_user_correct = secrets.compare_digest(credentials.username, ADMIN_USER)
+    is_pass_correct = secrets.compare_digest(credentials.password, ADMIN_PASS)
+    if not (is_user_correct and is_pass_correct):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Hatalı kullanıcı adı veya şifre",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
+
+def is_in_maintenance():
     try:
-        yield db
-    finally:
-        db.close()
+        conn = get_db_connection()
+        row = conn.execute("SELECT deger FROM ayarlar WHERE anahtar = 'bakim_modu'").fetchone()
+        conn.close()
+        return row["deger"] == "1" if row else False
+    except Exception:
+        return False
 
-# Pydantic Modelleri
-class HardwareCreate(BaseModel):
-    name: str
-    category: str
-    brand: str
-    score: float
-    specs: str
+# --- OAUTH ROTALARI ---
 
-# Auth Rotaları
 @app.get("/login/google")
-async def login_google(request: Request):
-    redirect_uri = request.url_for('auth_google')
+async def login_via_google(request: Request):
+    redirect_uri = request.url_for('auth_google_callback')
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-@app.get("/auth/google")
-async def auth_google(request: Request, db: Session = Depends(get_db)):
+@app.get("/auth/google/callback", name="auth_google_callback")
+async def auth_google_callback(request: Request):
     try:
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get('userinfo')
         if user_info:
-            user = db.query(User).filter(User.google_id == user_info['sub']).first()
-            if not user:
-                user = User(
-                    google_id=user_info['sub'],
-                    email=user_info['email'],
-                    name=user_info['name'],
-                    picture=user_info['picture']
-                )
-                db.add(user)
-                db.commit()
-                db.refresh(user)
-            request.session['user'] = {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "picture": user.picture
-            }
+            request.session['user'] = dict(user_info)
+        return RedirectResponse(url="/", status_code=303)
     except Exception as e:
-        print(f"Auth Error: {e}")
-    return RedirectResponse(url='/')
+        return RedirectResponse(url="/", status_code=303)
 
 @app.get("/logout")
 async def logout(request: Request):
-    request.session.clear()
-    return RedirectResponse(url='/')
+    request.session.pop('user', None)
+    return RedirectResponse(url="/", status_code=303)
 
-# Ana Sayfa
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request, db: Session = Depends(get_db)):
+@app.get("/api/me")
+async def get_current_user(request: Request):
     user = request.session.get('user')
-    hardware_list = db.query(HardwareItem).all()
-    
-    cpus = [item for item in hardware_list if item.category == 'CPU']
-    gpus = [item for item in hardware_list if item.category == 'GPU']
-    
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "user": user,
-        "cpus": cpus,
-        "gpus": gpus,
-        "hardware_list": hardware_list
-    })
+    if user:
+        return {"authenticated": True, "user": user}
+    return {"authenticated": False}
 
-# API Endpoints
-@app.post("/api/hardware")
-async def create_hardware(item: HardwareCreate, db: Session = Depends(get_db)):
-    new_item = HardwareItem(
-        name=item.name,
-        category=item.category,
-        brand=item.brand,
-        score=item.score,
-        specs=item.specs
-    )
-    db.add(new_item)
-    db.commit()
-    db.refresh(new_item)
-    return {"status": "success", "item": new_item.id}
+# --- STATIK SAYFA ROTALARI ---
 
-@app.get("/api/compare")
-async def compare_items(id1: int, id2: int, db: Session = Depends(get_db)):
-    item1 = db.query(HardwareItem).filter(HardwareItem.id == id1).first()
-    item2 = db.query(HardwareItem).filter(HardwareItem.id == id2).first()
-    if not item1 or not item2:
-        raise HTTPException(status_code=404, detail="Bileşen bulunamadı")
-    
-    def get_avg_rating(item):
-        reviews = db.query(Review).filter(Review.hardware_id == item.id).all()
-        if not reviews:
-            return 0
-        return sum(r.rating for r in reviews) / len(reviews)
+@app.get("/")
+def home():
+    if is_in_maintenance():
+        return HTMLResponse(
+            content="<h1>🛠️ Sitemiz Bakımdadır</h1><p>Kısa süre sonra tekrar ziyaret edin.</p>",
+            headers=NO_CACHE_HEADERS
+        )
+    return FileResponse("index.html", headers=NO_CACHE_HEADERS)
 
-    return {
-        "item1": {
-            "id": item1.id,
-            "name": item1.name,
-            "category": item1.category,
-            "brand": item1.brand,
-            "specs": item1.specs,
-            "score": item1.score,
-            "rating": get_avg_rating(item1)
-        },
-        "item2": {
-            "id": item2.id,
-            "name": item2.name,
-            "category": item2.category,
-            "brand": item2.brand,
-            "specs": item2.specs,
-            "score": item2.score,
-            "rating": get_avg_rating(item2)
-        }
-    }
+@app.get("/admin", response_class=HTMLResponse)
+def admin_panel(username: str = Depends(check_admin)):
+    return FileResponse("admin.html", headers=NO_CACHE_HEADERS)
 
-@app.get("/api/hardware/{item_id}")
-async def get_hardware_detail(item_id: int, db: Session = Depends(get_db)):
-    item = db.query(HardwareItem).filter(HardwareItem.id == item_id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Bileşen bulunamadı")
-    
-    reviews = db.query(Review).filter(Review.hardware_id == item_id).all()
-    review_list = []
-    for r in reviews:
-        u = db.query(User).filter(User.id == r.user_id).first()
-        review_list.append({
-            "id": r.id,
-            "rating": r.rating,
-            "comment": r.comment,
-            "user_name": u.name if u else "Anonim",
-            "user_picture": u.picture if u else ""
-        })
-        
-    return {
-        "id": item.id,
-        "name": item.name,
-        "category": item.category,
-        "brand": item.brand,
-        "specs": item.specs,
-        "score": item.score,
-        "reviews": review_list
-    }
+# --- PUBLIC API ROTALARI ---
 
-@app.post("/api/hardware/{item_id}/review")
-async def add_review(
-    item_id: int, 
-    request: Request, 
-    rating: int = Form(...), 
-    comment: str = Form(...), 
-    db: Session = Depends(get_db)
+@app.get("/api/gpus")
+def get_all_gpus():
+    conn = get_db_connection()
+    gpus = conn.execute("SELECT * FROM gpus ORDER BY puan DESC").fetchall()
+    conn.close()
+    return [dict(g) for g in gpus]
+
+@app.get("/api/cpus")
+def get_all_cpus():
+    conn = get_db_connection()
+    cpus = conn.execute("SELECT * FROM cpus ORDER BY puan DESC").fetchall()
+    conn.close()
+    return [dict(c) for c in cpus]
+
+# İşlemci Karşılaştırma API
+@app.get("/api/karsilastir/cpu")
+def compare_cpus(cpu1: str, cpu2: str):
+    conn = get_db_connection()
+    c1 = conn.execute("SELECT * FROM cpus WHERE LOWER(isim) LIKE ? LIMIT 1", (f"%{cpu1.lower()}%",)).fetchone()
+    c2 = conn.execute("SELECT * FROM cpus WHERE LOWER(isim) LIKE ? LIMIT 1", (f"%{cpu2.lower()}%",)).fetchone()
+    conn.close()
+
+    if not c1 or not c2:
+        raise HTTPException(status_code=404, detail="İşlemcilerden biri bulunamadı.")
+
+    fark = abs(c1["puan"] - c2["puan"])
+    kazanan = c1["isim"] if c1["puan"] > c2["puan"] else c2["isim"]
+    return {"cpu_1": dict(c1), "cpu_2": dict(c2), "kazanan": kazanan, "puan_farki": fark}
+
+# Yorumları Getir
+@app.get("/api/yorumlar/{parca_tipi}/{parca_id}")
+def get_reviews(parca_tipi: str, parca_id: int):
+    conn = get_db_connection()
+    yorumlar = conn.execute(
+        "SELECT * FROM yorumlar WHERE parca_tipi = ? AND parca_id = ? ORDER BY id DESC", 
+        (parca_tipi.lower(), parca_id)
+    ).fetchall()
+    conn.close()
+    return [dict(y) for y in yorumlar]
+
+# Yorum & Yıldız Ekle
+@app.post("/api/yorum-ekle")
+def add_review(
+    request: Request,
+    parca_tipi: str = Form(...),
+    parca_id: int = Form(...),
+    yildiz: int = Form(...),
+    yorum: str = Form(...)
 ):
-    user_data = request.session.get('user')
-    if not user_data:
-        raise HTTPException(status_code=401, detail="Lütfen önce giriş yapın.")
-    
-    new_review = Review(
-        hardware_id=item_id,
-        user_id=user_data['id'],
-        rating=rating,
-        comment=comment
+    user = request.session.get('user')
+    if not user:
+        raise HTTPException(status_code=401, detail="Yorum yapmak için Google ile giriş yapmalısınız.")
+
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO yorumlar (parca_tipi, parca_id, user_name, user_picture, yildiz, yorum) VALUES (?, ?, ?, ?, ?, ?)",
+        (parca_tipi.lower(), parca_id, user.get('name', 'Kullanıcı'), user.get('picture', ''), yildiz, yorum)
     )
-    db.add(new_review)
-    db.commit()
-    return {"status": "success", "message": "Yorum eklendi."}
+    conn.commit()
+    conn.close()
+    return {"status": "success", "message": "Yorum kaydedildi."}
