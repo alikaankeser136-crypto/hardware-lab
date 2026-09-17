@@ -3,318 +3,526 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware Lab - CPU & GPU Karşılaştırma</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Hardware Benchmark & System Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: #f8fafc; }
-        .card { background-color: #1e293b; border-color: #334155; color: #f8fafc; }
-        .nav-link { color: #94a3b8; }
-        .nav-link.active { color: #38bdf8 !important; border-bottom: 2px solid #38bdf8; }
+        :root {
+            --bg-color: #090d16;
+            --card-bg: rgba(22, 30, 49, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.35);
+            --accent-purple: #c084fc;
+            --accent-green: #34d399;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(192, 132, 252, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .logo-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 8px 0;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .auth-container {
+            margin-top: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-google {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #ffffff;
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 8px 18px;
+            border-radius: 20px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-google:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.7);
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(8px);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+        }
+
+        .user-name {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .btn-logout {
+            color: #f87171;
+            text-decoration: none;
+            font-size: 0.8rem;
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--card-border);
+            font-weight: 600;
+        }
+
+        .btn-logout:hover {
+            text-decoration: underline;
+        }
+
+        .main-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 6px;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .main-tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 13px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 700;
+            font-family: inherit;
+        }
+
+        .main-tab-btn.active {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+
+        .box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .box h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .inputs {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        input, select, textarea {
+            flex: 1;
+            min-width: 150px;
+            padding: 14px 18px;
+            font-size: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background-color: rgba(10, 15, 29, 0.8);
+            color: #ffffff;
+            font-family: inherit;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        button.action-btn {
+            padding: 14px 24px;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: inherit;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        }
+
+        button.action-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+        }
+
+        .item-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        /* Modal Stili */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid var(--card-border);
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%; max-width: 500px;
+        }
+
+        .reviews-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .review-item {
+            border-bottom: 1px solid var(--card-border);
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
-    <div class="container">
-        <a class="navbar-brand fw-bold text-info" href="#">Hardware Lab</a>
-        <div id="authContainer" class="d-flex align-items-center">
-            <!-- JavaScript burayı oturum durumuna göre dolduracak -->
-            <span class="text-muted small">Yükleniyor...</span>
-        </div>
-    </div>
-</nav>
-
-<div class="container my-4">
-    <ul class="nav nav-tabs mb-4 border-secondary" id="myTab" role="tablist">
-        <li class="nav-item">
-            <button class="nav-link active" id="compare-tab" data-bs-toggle="tab" data-bs-target="#compare-panel" type="button">Karşılaştırma</button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-panel" type="button">Donanım Listesi & Yorumlar</button>
-        </li>
-    </ul>
-
-    <div class="tab-content" id="myTabContent">
+<div class="container">
+    <header>
+        <h1 class="logo-title">Hardware Lab</h1>
+        <p class="subtitle">Ekran Kartı ve İşlemci Benchmark & Karşılaştırma</p>
         
-        <!-- Karşılaştırma Paneli -->
-        <div class="tab-pane fade show active" id="compare-panel">
-            <h3 class="mb-3 text-info">Bileşen Karşılaştırma</h3>
-            <div class="row g-3 mb-4">
-                <div class="col-md-5">
-                    <label class="form-label">1. Bileşen</label>
-                    <select id="item1-select" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Seçiniz...</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end justify-content-center">
-                    <button class="btn btn-info w-100 fw-bold" onclick="compareHardware()">Karşılaştır</button>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">2. Bileşen</label>
-                    <select id="item2-select" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Seçiniz...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="compare-result" class="row">
-                <div class="col-md-6">
-                    <div class="card p-3" id="card-item1"></div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card p-3" id="card-item2"></div>
-                </div>
-            </div>
+        <div id="authContainer" class="auth-container">
+            <!-- Oturum durumu JavaScript ile yüklenecek -->
         </div>
+    </header>
 
-        <!-- Donanım Listesi -->
-        <div class="tab-pane fade" id="list-panel">
-            <h3 class="mb-3 text-info">Tüm Donanımlar</h3>
-            <div id="hardwareList" class="row row-cols-1 row-cols-md-3 g-4"></div>
-        </div>
-
+    <!-- Ana Sekmeler -->
+    <div class="main-tabs">
+        <button class="main-tab-btn active" onclick="switchTab('gpuTab')">🎮 Ekran Kartları</button>
+        <button class="main-tab-btn" onclick="switchTab('cpuTab')">⚡ İşlemciler</button>
+        <button class="main-tab-btn" onclick="switchTab('compareTab')">⚔️ Karşılaştırma</button>
     </div>
-</div>
 
-<!-- Yorum Modalı -->
-<div class="modal fade" id="reviewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title" id="modalItemTitle">Yorumlar</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="modalItemType">
-                <input type="hidden" id="modalItemId">
-                
-                <div id="reviewFormArea" class="mb-3 card p-2 bg-secondary bg-opacity-10 border-secondary">
-                    <!-- Giriş durumuna göre yorum formu gelecek -->
-                </div>
+    <!-- GPU Sekmesi -->
+    <div id="gpuTab" class="tab-content">
+        <div class="box">
+            <h2>🎮 Ekran Kartı Listesi</h2>
+            <div id="gpuList" style="margin-top: 15px;"></div>
+        </div>
+    </div>
 
-                <hr class="border-secondary">
-                <h6>Kullanıcı Yorumları</h6>
-                <div id="reviewsList" style="max-height: 250px; overflow-y: auto;"></div>
+    <!-- CPU Sekmesi -->
+    <div id="cpuTab" class="tab-content" style="display: none;">
+        <div class="box">
+            <h2>⚡ İşlemci Listesi</h2>
+            <div id="cpuList" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- Karşılaştırma Sekmesi (Ekran Kartı & İşlemci) -->
+    <div id="compareTab" class="tab-content" style="display: none;">
+        <div class="box">
+            <h2>⚔️ Donanım Karşılaştır</h2>
+            <div class="inputs">
+                <select id="compCategory" onchange="updateCompareDropdowns()">
+                    <option value="gpu">🎮 Ekran Kartı Karşılaştır</option>
+                    <option value="cpu">⚡ İşlemci Karşılaştır</option>
+                </select>
+                <select id="item1Select"><option value="">1. Parçayı Seçin</option></select>
+                <select id="item2Select"><option value="">2. Parçayı Seçin</option></select>
+                <button class="action-btn" onclick="runCompare()">Karşılaştır</button>
             </div>
+            <div id="compareResult" style="margin-top: 20px;"></div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Yorum ve Yıldız Verme Modalı -->
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="margin-top: 0; color: var(--primary);">Yorumlar</h3>
+        <input type="hidden" id="modalType">
+        <input type="hidden" id="modalId">
+
+        <div id="reviewFormArea">
+            <!-- Giriş yapılmışsa yorum formu çıkacak -->
+        </div>
+
+        <div class="reviews-list" id="reviewsContainer"></div>
+        <button class="action-btn" style="margin-top: 15px; width: 100%; background: #475569;" onclick="closeModal()">Kapat</button>
+    </div>
+</div>
+
 <script>
-let currentUser = null;
 let allGpus = [];
 let allCpus = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     await checkUser();
-    await loadHardwareData();
+    await loadData();
 });
 
-// Oturum Durumunu Kontrol Et
 async function checkUser() {
     const res = await fetch('/api/me');
     const data = await res.json();
-    const authContainer = document.getElementById('authContainer');
-    const reviewFormArea = document.getElementById('reviewFormArea');
+    const authDiv = document.getElementById('authContainer');
 
     if (data.authenticated) {
-        currentUser = data.user;
-        authContainer.innerHTML = `
-            <img src="${currentUser.picture}" class="rounded-circle me-2" width="32" height="32" alt="">
-            <span class="me-3">${currentUser.name}</span>
-            <a href="/logout" class="btn btn-outline-danger btn-sm">Çıkış Yap</a>
-        `;
-        reviewFormArea.innerHTML = `
-            <h6>Yorum Yap ve Yıldız Ver</h6>
-            <div class="mb-2">
-                <label class="form-label">Yıldız:</label>
-                <select id="ratingSelect" class="form-select form-select-sm bg-dark text-white border-secondary w-auto d-inline-block ms-2">
-                    <option value="5">5 ⭐⭐⭐⭐⭐</option>
-                    <option value="4">4 ⭐⭐⭐⭐</option>
-                    <option value="3">3 ⭐⭐⭐</option>
-                    <option value="2">2 ⭐⭐</option>
-                    <option value="1">1 ⭐</option>
-                </select>
+        authDiv.innerHTML = `
+            <div class="user-profile">
+                <img src="${data.user.picture}" class="user-avatar" alt="">
+                <span class="user-name">${data.user.name}</span>
+                <a href="/logout" class="btn-logout">Çıkış Yap</a>
             </div>
-            <textarea id="commentText" class="form-control bg-dark text-white border-secondary mb-2" rows="2" placeholder="Düşüncelerinizi yazın..."></textarea>
-            <button class="btn btn-info btn-sm" onclick="submitReview()">Gönder</button>
         `;
     } else {
-        authContainer.innerHTML = `<a href="/login/google" class="btn btn-outline-light btn-sm">Google ile Giriş Yap</a>`;
-        reviewFormArea.innerHTML = `<div class="alert alert-warning py-2 mb-0">Yorum yapabilmek için lütfen Google hesabınızla giriş yapın.</div>`;
+        authDiv.innerHTML = `
+            <a href="/login/google" class="btn-google">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                Google ile Giriş Yap
+            </a>
+        `;
     }
 }
 
-// Donanım Verilerini Yükle
-async function loadHardwareData() {
-    const [gpuRes, cpuRes] = await Promise.all([
-        fetch('/api/gpus'),
-        fetch('/api/cpus')
-    ]);
+async function loadData() {
+    const [resGpu, resCpu] = await Promise.all([fetch('/api/gpus'), fetch('/api/cpus')]);
+    allGpus = await resGpu.json();
+    allCpus = await resCpu.json();
 
-    allGpus = await gpuRes.json();
-    allCpus = await cpuRes.json();
-
-    const select1 = document.getElementById('item1-select');
-    const select2 = document.getElementById('item2-select');
-    const listContainer = document.getElementById('hardwareList');
-
-    select1.innerHTML = '<option value="">Seçiniz...</option>';
-    select2.innerHTML = '<option value="">Seçiniz...</option>';
-    listContainer.innerHTML = '';
-
-    // GPU Seçenekleri
-    allGpus.forEach(gpu => {
-        select1.innerHTML += `<option value="gpu:${gpu.isim}">[GPU] ${gpu.isim}</option>`;
-        select2.innerHTML += `<option value="gpu:${gpu.isim}">[GPU] ${gpu.isim}</option>`;
-        
-        listContainer.innerHTML += `
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <span class="badge bg-primary mb-2">GPU</span>
-                        <h5 class="card-title">${gpu.isim}</h5>
-                        <p class="card-text text-muted">VRAM: ${gpu.vram} | F/P: ${gpu.fiyat_performans}</p>
-                        <p class="fw-bold text-success">Puan: ${gpu.puan}</p>
-                        <button class="btn btn-outline-info btn-sm w-100" onclick="openReviewModal('gpu', ${gpu.id}, '${gpu.isim}')">Yorumlar</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    // CPU Seçenekleri
-    allCpus.forEach(cpu => {
-        select1.innerHTML += `<option value="cpu:${cpu.isim}">[CPU] ${cpu.isim}</option>`;
-        select2.innerHTML += `<option value="cpu:${cpu.isim}">[CPU] ${cpu.isim}</option>`;
-
-        listContainer.innerHTML += `
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <span class="badge bg-purple bg-warning text-dark mb-2">CPU</span>
-                        <h5 class="card-title">${cpu.isim}</h5>
-                        <p class="card-text text-muted">Çekirdek: ${cpu.cekirdek} | F/P: ${cpu.fiyat_performans}</p>
-                        <p class="fw-bold text-success">Puan: ${cpu.puan}</p>
-                        <button class="btn btn-outline-info btn-sm w-100" onclick="openReviewModal('cpu', ${cpu.id}, '${cpu.isim}')">Yorumlar</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
+    renderGpus();
+    renderCpus();
+    updateCompareDropdowns();
 }
 
-// Karşılaştırma
-async function compareHardware() {
-    const val1 = document.getElementById('item1-select').value;
-    const val2 = document.getElementById('item2-select').value;
+function renderGpus() {
+    const container = document.getElementById('gpuList');
+    container.innerHTML = allGpus.map(g => `
+        <div class="item-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; color:#fff;">${g.isim}</h3>
+                <span style="color:var(--primary); font-weight:800;">${g.puan} Puan</span>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin:8px 0;">VRAM: ${g.vram} | F/P: ${g.fiyat_performans}</p>
+            <button class="action-btn" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openReviewModal('gpu', ${g.id}, '${g.isim}')">⭐ Yorum Yap & Puan Ver</button>
+        </div>
+    `).join('');
+}
 
-    if (!val1 || !val2) {
-        alert("Lütfen iki bileşen seçin.");
-        return;
-    }
+function renderCpus() {
+    const container = document.getElementById('cpuList');
+    container.innerHTML = allCpus.map(c => `
+        <div class="item-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; color:#fff;">${c.isim}</h3>
+                <span style="color:var(--accent-purple); font-weight:800;">${c.puan} Puan</span>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin:8px 0;">Çekirdek: ${c.cekirdek} | F/P: ${c.fiyat_performans}</p>
+            <button class="action-btn" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openReviewModal('cpu', ${c.id}, '${c.isim}')">⭐ Yorum Yap & Puan Ver</button>
+        </div>
+    `).join('');
+}
 
-    const [type1, name1] = val1.split(':');
-    const [type2, name2] = val2.split(':');
-
-    if (type1 !== type2) {
-        alert("Lütfen aynı kategorideki (iki GPU veya iki CPU) bileşenleri karşılaştırın.");
-        return;
-    }
-
-    const endpoint = type1 === 'gpu' ? `/api/karsilastir?gpu1=${name1}&gpu2=${name2}` : `/api/karsilastir/cpu?cpu1=${name1}&cpu2=${name2}`;
-    const res = await fetch(endpoint);
+function updateCompareDropdowns() {
+    const cat = document.getElementById('compCategory').value;
+    const items = cat === 'gpu' ? allGpus : allCpus;
     
-    if (res.ok) {
+    const sel1 = document.getElementById('item1Select');
+    const sel2 = document.getElementById('item2Select');
+
+    sel1.innerHTML = items.map(i => `<option value="${i.isim}">${i.isim}</option>`).join('');
+    sel2.innerHTML = items.map(i => `<option value="${i.isim}">${i.isim}</option>`).join('');
+}
+
+async function runCompare() {
+    const cat = document.getElementById('compCategory').value;
+    const item1 = document.getElementById('item1Select').value;
+    const item2 = document.getElementById('item2Select').value;
+
+    const url = cat === 'gpu' ? `/api/karsilastir?gpu1=${item1}&gpu2=${item2}` : `/api/karsilastir/cpu?cpu1=${item1}&cpu2=${item2}`;
+    const res = await fetch(url);
+    if(res.ok) {
         const data = await res.json();
         const obj1 = data.kart_1 || data.cpu_1;
         const obj2 = data.kart_2 || data.cpu_2;
-
-        renderCard('card-item1', obj1, type1);
-        renderCard('card-item2', obj2, type2);
+        
+        document.getElementById('compareResult').innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div class="item-card">
+                    <h4>${obj1.isim}</h4>
+                    <p>Puan: <strong>${obj1.puan}</strong></p>
+                    <p>Detay: ${obj1.vram || obj1.cekirdek}</p>
+                </div>
+                <div class="item-card">
+                    <h4>${obj2.isim}</h4>
+                    <p>Puan: <strong>${obj2.puan}</strong></p>
+                    <p>Detay: ${obj2.vram || obj2.cekirdek}</p>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:10px; color:var(--accent-green); font-weight:bold;">
+                🏆 Kazanan: ${data.kazanan} (${data.puan_farki} Puan Fark)
+            </div>
+        `;
     }
 }
 
-function renderCard(elementId, item, type) {
-    document.getElementById(elementId).innerHTML = `
-        <span class="badge bg-secondary mb-2">${type.toUpperCase()} - ${item.marka}</span>
-        <h4>${item.isim}</h4>
-        <hr class="border-secondary">
-        <p><strong>Detay:</strong> ${item.vram || item.cekirdek}</p>
-        <p><strong>Performans Puanı:</strong> ${item.puan}</p>
-        <p><strong>Fiyat/Performans:</strong> ${item.fiyat_performans}</p>
-    `;
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.main-tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(tabId).style.display = 'block';
+    event.currentTarget.classList.add('active');
 }
 
-// Yorum Modalı İşlemleri
-let reviewModal;
 async function openReviewModal(type, id, name) {
-    document.getElementById('modalItemType').value = type;
-    document.getElementById('modalItemId').value = id;
-    document.getElementById('modalItemTitle').innerText = name + " - Yorumlar";
+    document.getElementById('modalType').value = type;
+    document.getElementById('modalId').value = id;
+    document.getElementById('modalTitle').innerText = name + " - Yorumlar";
+
+    const authRes = await fetch('/api/me');
+    const authData = await authRes.json();
+    const formArea = document.getElementById('reviewFormArea');
+
+    if(authData.authenticated) {
+        formArea.innerHTML = `
+            <div style="margin-bottom:10px;">
+                <select id="modalStars" style="padding:8px;"><option value="5">⭐⭐⭐⭐⭐ 5</option><option value="4">⭐⭐⭐⭐ 4</option><option value="3">⭐⭐⭐ 3</option></select>
+            </div>
+            <textarea id="modalComment" placeholder="Yorumunuzu girin..." style="width:100%; height:60px; margin-bottom:8px;"></textarea>
+            <button class="action-btn" style="width:100%;" onclick="sendReview()">Gönder</button>
+        `;
+    } else {
+        formArea.innerHTML = `<p style="color:#fbbf24; font-size:0.85rem;">Yorum yapmak için Google ile giriş yapmalısınız.</p>`;
+    }
 
     await loadReviews(type, id);
-
-    if (!reviewModal) {
-        reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-    }
-    reviewModal.show();
+    document.getElementById('reviewModal').style.display = 'flex';
 }
 
 async function loadReviews(type, id) {
     const res = await fetch(`/api/yorumlar/${type}/${id}`);
     const reviews = await res.json();
-    const listContainer = document.getElementById('reviewsList');
-    listContainer.innerHTML = '';
-
-    if (reviews.length === 0) {
-        listContainer.innerHTML = '<p class="text-muted small">Henüz yorum yapılmamış.</p>';
+    const container = document.getElementById('reviewsContainer');
+    
+    if(reviews.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">Henüz yorum yapılmadı.</p>`;
         return;
     }
 
-    reviews.forEach(r => {
-        listContainer.innerHTML += `
-            <div class="border-bottom border-secondary pb-2 mb-2">
-                <div class="d-flex align-items-center mb-1">
-                    <img src="${r.user_picture}" class="rounded-circle me-2" width="20" height="20" alt="">
-                    <strong class="small me-auto">${r.user_name}</strong>
-                    <span class="text-warning small">⭐ ${r.yildiz}/5</span>
-                </div>
-                <p class="mb-0 small text-light">${r.yorum}</p>
+    container.innerHTML = reviews.map(r => `
+        <div class="review-item">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:var(--primary);">${r.user_name}</strong>
+                <span style="color:#f59e0b;">⭐ ${r.yildiz}/5</span>
             </div>
-        `;
-    });
+            <p style="margin:4px 0 0 0; color:#e2e8f0;">${r.yorum}</p>
+        </div>
+    `).join('');
 }
 
-async function submitReview() {
-    const type = document.getElementById('modalItemType').value;
-    const id = document.getElementById('modalItemId').value;
-    const rating = document.getElementById('ratingSelect').value;
-    const comment = document.getElementById('commentText').value;
-
-    if (!comment) {
-        alert("Lütfen yorum yazın.");
-        return;
-    }
+async function sendReview() {
+    const type = document.getElementById('modalType').value;
+    const id = document.getElementById('modalId').value;
+    const yildiz = document.getElementById('modalStars').value;
+    const yorum = document.getElementById('modalComment').value;
 
     const formData = new FormData();
     formData.append('parca_tipi', type);
     formData.append('parca_id', id);
-    formData.append('yildiz', rating);
-    formData.append('yorum', comment);
+    formData.append('yildiz', yildiz);
+    formData.append('yorum', yorum);
 
-    const res = await fetch('/api/yorum-ekle', {
-        method: 'POST',
-        body: formData
-    });
-
-    if (res.ok) {
-        document.getElementById('commentText').value = '';
+    const res = await fetch('/api/yorum-ekle', { method: 'POST', body: formData });
+    if(res.ok) {
+        document.getElementById('modalComment').value = '';
         loadReviews(type, id);
-    } else {
-        alert("Yorum gönderilemedi.");
     }
+}
+
+function closeModal() {
+    document.getElementById('reviewModal').style.display = 'none';
 }
 </script>
 </body>
