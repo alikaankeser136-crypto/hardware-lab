@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+starlette
+authlib
+itsdangerous
+httpx
+jinja2

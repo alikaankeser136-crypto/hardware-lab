@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Lab - Admin Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .card { background-color: #1e293b; border-color: #334155; color: #f8fafc; }
+        .form-control, .form-select { background-color: #0f172a; color: #fff; border-color: #334155; }
+        .form-control:focus, .form-select:focus { background-color: #0f172a; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-info fw-bold">Hardware Lab Admin Yönetimi</h2>
+        <a href="/" class="btn btn-outline-light btn-sm">Ana Sayfaya Dön</a>
+    </div>
+
+    <!-- Yeni Donanım Ekleme Formu -->
+    <div class="card p-4 mb-4">
+        <h4 class="mb-3">Yeni Bileşen Ekle (CPU / GPU)</h4>
+        <form id="addHardwareForm">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Parça Adı</label>
+                    <input type="text" id="name" class="form-control" placeholder="Örn: RTX 4060 veya Ryzen 5 5600" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Kategori</label>
+                    <select id="category" class="form-select" required>
+                        <option value="GPU">GPU (Ekran Kartı)</option>
+                        <option value="CPU">CPU (İşlemci)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Marka</label>
+                    <select id="brand" class="form-select" required>
+                        <option value="NVIDIA">NVIDIA</option>
+                        <option value="AMD">AMD</option>
+                        <option value="Intel">Intel</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Performans Puanı (Benchmark)</label>
+                    <input type="number" step="0.1" id="score" class="form-control" placeholder="Örn: 85.5" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Teknik Özellikler (Specs)</label>
+                    <input type="text" id="specs" class="form-control" placeholder="Örn: 8GB VRAM, 128-bit veya 6 Çekirdek, 3.5 GHz" required>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-info fw-bold" onclick="addHardware()">Bileşeni Kaydet</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+async function addHardware() {
+    const name = document.getElementById('name').value;
+    const category = document.getElementById('category').value;
+    const brand = document.getElementById('brand').value;
+    const score = document.getElementById('score').value;
+    const specs = document.getElementById('specs').value;
+
+    if(!name || !score || !specs) {
+        alert("Lütfen tüm alanları doldurun.");
+        return;
+    }
+
+    const payload = {
+        name: name,
+        category: category,
+        brand: brand,
+        score: parseFloat(score),
+        specs: specs
+    };
+
+    const res = await fetch('/api/hardware', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if(res.ok) {
+        alert("Bileşen başarıyla eklendi!");
+        document.getElementById('addHardwareForm').reset();
+    } else {
+        alert("Ekleme sırasında hata oluştu.");
+    }
+}
+</script>
+</body>
+</html>
