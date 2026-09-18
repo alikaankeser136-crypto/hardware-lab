@@ -27,7 +27,7 @@ def init_db():
             brand TEXT,
             model TEXT,
             score INTEGER,
-            specs TEXT -- JSON formatında ek teknik özellikler
+            specs TEXT
         )
     ''')
 
@@ -45,7 +45,7 @@ def init_db():
         )
     ''')
 
-    # Sistem Toplama (Custom Builds)
+    # Sistem Toplama (User Builds)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS user_builds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,6 +58,17 @@ def init_db():
         )
     ''')
     
+    # Test için örnek donanım verisi yoksa ekle
+    cursor.execute("SELECT COUNT(*) FROM components")
+    if cursor.fetchone()[0] == 0:
+        sample_data = [
+            ('cpu', 'AMD', 'Ryzen 5 5600', 85, '6 C / 12 T'),
+            ('cpu', 'Intel', 'Core i5-12400F', 87, '6 C / 12 T'),
+            ('gpu', 'NVIDIA', 'RTX 4060', 90, '8 GB VRAM'),
+            ('gpu', 'AMD', 'RX 6700 XT', 88, '12 GB VRAM')
+        ]
+        cursor.executemany("INSERT INTO components (type, brand, model, score, specs) VALUES (?, ?, ?, ?, ?)", sample_data)
+
     conn.commit()
     conn.close()
 
