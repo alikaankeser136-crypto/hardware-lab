@@ -1,155 +1,69 @@
-import os
-import secrets
-from fastapi import FastAPI, HTTPException, Form, Depends, Request, status
-from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from starlette.middleware.sessions import SessionMiddleware
-from authlib.integrations.starlette_client import OAuth
+from fastapi import FastAPI, Depends, HTTPException, Request
+from pydantic import BaseModel
+from database import get_db
 
-from database import get_db_connection, init_db
+app = FastAPI()
 
-app = FastAPI(title="Hardware Lab")
+# --- Pydantic Modelleri ---
+class ReviewCreate(BaseModel):
+    component_id: int
+    rating: int
+    comment: str
 
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "super-secret-key-hardware-lab"))
+class BuildCreate(BaseModel):
+    title: str
+    cpu_id: int
+    gpu_id: int
 
-@app.on_event("startup")
-def startup_event():
-    init_db()
-
-# OAuth Yapılandırması
-oauth = OAuth()
-oauth.register(
-    name='google',
-    client_id=os.getenv("GOOGLE_CLIENT_ID", "dummy_id"),
-    client_secret=os.getenv("GOOGLE_CLIENT_SECRET", "dummy_secret"),
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'}
-)
-
-security = HTTPBasic()
-ADMIN_USER = "admin"
-ADMIN_PASS = "1234"
-
-NO_CACHE_HEADERS = {
-    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-    "Pragma": "no-cache",
-    "Expires": "0"
-}
-
-def check_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    is_user_correct = secrets.compare_digest(credentials.username, ADMIN_USER)
-    is_pass_correct = secrets.compare_digest(credentials.password, ADMIN_PASS)
-    if not (is_user_correct and is_pass_correct):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Hatalı kullanıcı adı veya şifre",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
-
-def is_in_maintenance():
-    try:
-        conn = get_db_connection()
-        row = conn.execute("SELECT deger FROM ayarlar WHERE anahtar = 'bakim_modu'").fetchone()
-        conn.close()
-        return row["deger"] == "1" if row else False
-    except Exception:
-        return False
-
-# Google Auth Rotaları
-@app.get("/login/google")
-async def login_via_google(request: Request):
-    redirect_uri = request.url_for('auth_google_callback')
-    return await oauth.google.authorize_redirect(request, redirect_uri)
-
-@app.get("/auth/google/callback", name="auth_google_callback")
-async def auth_google_callback(request: Request):
-    try:
-        token = await oauth.google.authorize_access_token(request)
-        user_info = token.get('userinfo')
-        if user_info:
-            request.session['user'] = dict(user_info)
-        return RedirectResponse(url="/", status_code=303)
-    except Exception:
-        return RedirectResponse(url="/", status_code=303)
-
-@app.get("/logout")
-async def logout(request: Request):
-    request.session.pop('user', None)
-    return RedirectResponse(url="/", status_code=303)
-
-@app.get("/api/me")
-async def get_current_user(request: Request):
-    user = request.session.get('user')
-    if user:
-        return {"authenticated": True, "user": user}
-    return {"authenticated": False}
-
-# Sayfa Rotaları
-@app.get("/")
-def home():
-    if is_in_maintenance():
-        return HTMLResponse(content="<h1>🛠️ Sitemiz Bakımdadır</h1>", headers=NO_CACHE_HEADERS)
-    return FileResponse("index.html", headers=NO_CACHE_HEADERS)
-
-@app.get("/admin", response_class=HTMLResponse)
-def admin_panel(username: str = Depends(check_admin)):
-    return FileResponse("admin.html", headers=NO_CACHE_HEADERS)
-
-# Public API Rotaları
-@app.get("/api/gpus")
-def get_all_gpus():
-    conn = get_db_connection()
-    gpus = conn.execute("SELECT * FROM gpus ORDER BY puan DESC").fetchall()
-    conn.close()
-    return [dict(g) for g in gpus]
-
-@app.get("/api/cpus")
-def get_all_cpus():
-    conn = get_db_connection()
-    cpus = conn.execute("SELECT * FROM cpus ORDER BY puan DESC").fetchall()
-    conn.close()
-    return [dict(c) for c in cpus]
-
-@app.get("/api/karsilastir")
-def compare_gpus(gpu1: str, gpu2: str):
-    conn = get_db_connection()
-    k1 = conn.execute("SELECT * FROM gpus WHERE LOWER(isim) LIKE ? LIMIT 1", (f"%{gpu1.lower()}%",)).fetchone()
-    k2 = conn.execute("SELECT * FROM gpus WHERE LOWER(isim) LIKE ? LIMIT 1", (f"%{gpu2.lower()}%",)).fetchone()
-    conn.close()
-    if not k1 or not k2:
-        raise HTTPException(status_code=404, detail="Kartlardan biri bulunamadı")
-    fark = abs(k1["puan"] - k2["puan"])
-    kazanan = k1["isim"] if k1["puan"] > k2["puan"] else k2["isim"]
-    return {"kart_1": dict(k1), "kart_2": dict(k2), "kazanan": kazanan, "puan_farki": fark}
-
-@app.get("/api/karsilastir/cpu")
-def compare_cpus(cpu1: str, cpu2: str):
-    conn = get_db_connection()
-    c1 = conn.execute("SELECT * FROM cpus WHERE LOWER(isim) LIKE ? LIMIT 1", (f"%{cpu1.lower()}%",)).fetchone()
-    c2 = conn.execute("SELECT * FROM cpus WHERE LOWER(isim) LIKE ? LIMIT 1", (f"%{cpu2.lower()}%",)).fetchone()
-    conn.close()
-    if not c1 or not c2:
-        raise HTTPException(status_code=404, detail="İşlemcilerden biri bulunamadı")
-    fark = abs(c1["puan"] - c2["puan"])
-    kazanan = c1["isim"] if c1["puan"] > c2["puan"] else c2["isim"]
-    return {"cpu_1": dict(c1), "cpu_2": dict(c2), "kazanan": kazanan, "puan_farki": fark}
-
-@app.get("/api/yorumlar/{parca_tipi}/{parca_id}")
-def get_reviews(parca_tipi: str, parca_id: int):
-    conn = get_db_connection()
-    yorumlar = conn.execute("SELECT * FROM yorumlar WHERE parca_tipi = ? AND parca_id = ? ORDER BY id DESC", (parca_tipi.lower(), parca_id)).fetchall()
-    conn.close()
-    return [dict(y) for y in yorumlar]
-
-@app.post("/api/yorum-ekle")
-def add_review(request: Request, parca_tipi: str = Form(...), parca_id: int = Form(...), yildiz: int = Form(...), yorum: str = Form(...)):
+# --- Oturum Kontrol Yardımcısı ---
+def get_current_user(request: Request):
     user = request.session.get('user')
     if not user:
         raise HTTPException(status_code=401, detail="Google ile giriş yapmalısınız.")
-    conn = get_db_connection()
-    conn.execute("INSERT INTO yorumlar (parca_tipi, parca_id, user_name, user_picture, yildiz, yorum) VALUES (?, ?, ?, ?, ?, ?)",
-                 (parca_tipi.lower(), parca_id, user.get('name', 'Kullanıcı'), user.get('picture', ''), yildiz, yorum))
+    return user
+
+# --- Donanım Karşılaştırma API ---
+@app.get("/api/compare")
+def compare_components(comp1_id: int, comp2_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM components WHERE id IN (?, ?)", (comp1_id, comp2_id))
+    items = cursor.fetchall()
+    conn.close()
+    return [dict(item) for item in items]
+
+# --- Yorum ve Puan Ekleme ---
+@app.post("/api/reviews")
+def add_review(review: ReviewCreate, user: dict = Depends(get_current_user)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO reviews (component_id, user_id, rating, comment) VALUES (?, ?, ?, ?)",
+        (review.component_id, user['sub'], review.rating, review.comment)
+    )
     conn.commit()
     conn.close()
-    return {"status": "success"}
+    return {"status": "success", "message": "Yorum eklendi."}
+
+# --- Sistem Toplama Özelliği ---
+@app.post("/api/builds")
+def create_build(build: BuildCreate, user: dict = Depends(get_current_user)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO user_builds (user_id, title, cpu_id, gpu_id) VALUES (?, ?, ?, ?)",
+        (user['sub'], build.title, build.cpu_id, build.gpu_id)
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "success", "message": "Sistem kaydedildi."}
+
+# --- Kullanıcının Kayıtlı Sistemleri ---
+@app.get("/api/my-builds")
+def get_my_builds(user: dict = Depends(get_current_user)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM user_builds WHERE user_id = ?", (user['sub'],))
+    builds = cursor.fetchall()
+    conn.close()
+    return [dict(b) for b in builds]
