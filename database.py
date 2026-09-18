@@ -1,62 +1,65 @@
 import sqlite3
 
-DB_NAME = "hardware.db"
-
-def get_db_connection():
-    conn = sqlite3.connect(DB_NAME)
+def get_db():
+    conn = sqlite3.connect("hardware.db")
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
-
-    # Ayarlar Tablosu
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS ayarlar (
-            anahtar TEXT PRIMARY KEY,
-            deger TEXT
+    
+    # Kullanıcılar
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE,
+            name TEXT,
+            picture TEXT
         )
-    """)
-    cursor.execute("INSERT OR IGNORE INTO ayarlar (anahtar, deger) VALUES ('bakim_modu', '0')")
-
-    # Ekran Kartları (GPUs)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS gpus (
+    ''')
+    
+    # Donanımlar (CPU/GPU)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS components (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            isim TEXT UNIQUE,
-            puan INTEGER,
-            marka TEXT,
-            vram TEXT,
-            fiyat_performans TEXT
+            type TEXT, -- 'cpu' veya 'gpu'
+            brand TEXT,
+            model TEXT,
+            score INTEGER,
+            specs TEXT -- JSON formatında ek teknik özellikler
         )
-    """)
+    ''')
 
-    # İşlemciler (CPUs)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS cpus (
+    # Yorumlar ve Puanlar
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            isim TEXT UNIQUE,
-            puan INTEGER,
-            marka TEXT,
-            cekirdek TEXT,
-            fiyat_performans TEXT
+            component_id INTEGER,
+            user_id TEXT,
+            rating INTEGER CHECK(rating >= 1 AND rating <= 5),
+            comment TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(component_id) REFERENCES components(id),
+            FOREIGN KEY(user_id) REFERENCES users(id)
         )
-    """)
+    ''')
 
-    # Yorumlar ve Yıldız Puanları
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS yorumlar (
+    # Sistem Toplama (Custom Builds)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_builds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            parca_tipi TEXT,
-            parca_id INTEGER,
-            user_name TEXT,
-            user_picture TEXT,
-            yildiz INTEGER,
-            yorum TEXT,
-            tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            user_id TEXT,
+            title TEXT,
+            cpu_id INTEGER,
+            gpu_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
         )
-    """)
-
+    ''')
+    
     conn.commit()
     conn.close()
+
+if __name__ == "__main__":
+    init_db()
