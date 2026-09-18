@@ -180,12 +180,11 @@
             <h1>Hardware Lab</h1>
         </div>
         <div class="auth-status" id="authContainer">
-            <!-- JavaScript oturum durumuna göre burayı dolduracak -->
             <a href="/auth/google" class="btn">Google ile Giriş Yap</a>
         </div>
     </header>
 
-    <!-- 1. DÖŞEME: İşlemci ve Ekran Kartı Karşılaştırma Modülü -->
+    <!-- KARŞILAŞTIRMA MODÜLÜ -->
     <section class="card" style="margin-bottom: 25px;">
         <h2>İşlemci / GPU Karşılaştırma</h2>
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -217,7 +216,7 @@
 
     <div class="grid-container">
         
-        <!-- 2. DÖŞEME: Sistem Toplama (PC Builder) Modülü -->
+        <!-- SİSTEM TOPLAMA MODÜLÜ -->
         <div class="card">
             <h2>Kendi Sistemini Topla</h2>
             <div id="builderAuthLock" class="badge-lock" style="display: none; margin-bottom: 15px;">
@@ -225,7 +224,7 @@
             </div>
             <div class="form-group">
                 <label for="buildTitle">Sistem Adı</label>
-                <input type="text" id="buildTitle" placeholder="Örn: Oyun Bilgisayarım 2026">
+                <input type="text" id="buildTitle" placeholder="Örn: Oyun Bilgisayarım">
             </div>
             <div class="form-group">
                 <label for="buildCpu">İşlemci Seç</label>
@@ -235,7 +234,7 @@
                 <label for="buildGpu">Ekran Kartı Seç</label>
                 <select id="buildGpu"></select>
             </div>
-            <button class="btn btn-success" style="width: 100%;" onclick="saveBuild()">Sistemi Kaydet</button>
+            <button class="btn btn-success" style="width: 100%;" id="btnBuildSubmit" onclick="saveBuild()">Sistemi Kaydet</button>
 
             <div style="margin-top: 20px;">
                 <h3 style="font-size: 14px; color: var(--text-bright); margin-bottom: 10px;">Kaydedilen Sistemlerim</h3>
@@ -243,12 +242,12 @@
             </div>
         </div>
 
-        <!-- 3. DÖŞEME: Yorum Yapma & Puan Verme Modülü -->
+        <!-- YORUM VE PUAN MODÜLÜ -->
         <div class="card">
             <h2>Donanım Değerlendirme & Yorum</h2>
             
             <div id="reviewAuthLock" class="badge-lock" style="display: none; margin-bottom: 15px;">
-                Yorum yapabilmek ve puan verebilmek için Google hesabınızla giriş yapın.
+                Yorum yapabilmek ve puan verebilmek için Google ile giriş yapın.
             </div>
 
             <form id="reviewForm" onsubmit="submitReview(event)">
@@ -285,7 +284,6 @@
         let currentUser = null;
         let componentsData = [];
 
-        // Sayfa yüklendiğinde çalışacak başlatıcı
         async function init() {
             await checkAuth();
             await fetchComponents();
@@ -294,7 +292,6 @@
             loadReviews();
         }
 
-        // Oturum Kontrolü (FastAPI /api/me veya session yapınıza bağlıdır)
         async function checkAuth() {
             try {
                 const res = await fetch('/api/me');
@@ -317,6 +314,8 @@
             `;
             document.getElementById('reviewAuthLock').style.display = 'none';
             document.getElementById('builderAuthLock').style.display = 'none';
+            document.getElementById('btnReviewSubmit').disabled = false;
+            document.getElementById('btnBuildSubmit').disabled = false;
         }
 
         function renderAuthGuest() {
@@ -326,12 +325,12 @@
             document.getElementById('reviewAuthLock').style.display = 'block';
             document.getElementById('builderAuthLock').style.display = 'block';
             
-            // Giriş yapılmadıysa form alanlarını kısıtla
             document.getElementById('btnReviewSubmit').disabled = true;
             document.getElementById('btnReviewSubmit').style.opacity = '0.5';
+            document.getElementById('btnBuildSubmit').disabled = true;
+            document.getElementById('btnBuildSubmit').style.opacity = '0.5';
         }
 
-        // Donanımları Çekme ve Seçim Kutularını Doldurma
         async function fetchComponents() {
             try {
                 const res = await fetch('/api/components');
@@ -340,7 +339,7 @@
                     populateDropdowns();
                 }
             } catch (e) {
-                console.error("Donanım listesi çekilemedi:", e);
+                console.error("Donanım verisi alınamadı:", e);
             }
         }
 
@@ -364,7 +363,6 @@
             });
         }
 
-        // Karşılaştırma Seçeneklerini Güncelleme
         function loadCompareOptions() {
             const type = document.getElementById('compType').value;
             const comp1 = document.getElementById('comp1');
@@ -383,7 +381,6 @@
             if (comp2.options.length > 1) comp2.selectedIndex = 1;
         }
 
-        // Karşılaştırma İşlemi
         async function executeCompare() {
             const id1 = document.getElementById('comp1').value;
             const id2 = document.getElementById('comp2').value;
@@ -398,22 +395,20 @@
                     document.getElementById('res1').innerHTML = `
                         <h3 style="color:var(--accent-blue)">${data[0].brand} ${data[0].model}</h3>
                         <p style="margin-top:8px;"><strong>Skor:</strong> ${data[0].score}</p>
+                        <p style="font-size:12px; color:#8b949e;">${data[0].specs || ''}</p>
                     `;
                     document.getElementById('res2').innerHTML = `
                         <h3 style="color:var(--accent-blue)">${data[1].brand} ${data[1].model}</h3>
                         <p style="margin-top:8px;"><strong>Skor:</strong> ${data[1].score}</p>
+                        <p style="font-size:12px; color:#8b949e;">${data[1].specs || ''}</p>
                     `;
                 }
             }
         }
 
-        // Yorum Gönderme
         async function submitReview(e) {
             e.preventDefault();
-            if (!currentUser) {
-                alert("Yorum yapabilmek için Google ile giriş yapmalısınız.");
-                return;
-            }
+            if (!currentUser) return;
 
             const body = {
                 component_id: parseInt(document.getElementById('reviewComponent').value),
@@ -430,12 +425,9 @@
             if (res.ok) {
                 document.getElementById('reviewComment').value = '';
                 loadReviews();
-            } else {
-                alert("Yorum kaydedilemedi.");
             }
         }
 
-        // Yorumları Listeleme
         async function loadReviews() {
             const res = await fetch('/api/reviews');
             if (res.ok) {
@@ -454,16 +446,12 @@
             }
         }
 
-        // Sistem Kaydetme
         async function saveBuild() {
-            if (!currentUser) {
-                alert("Sisteminizi kaydedebilmek için Google ile giriş yapmalısınız.");
-                return;
-            }
+            if (!currentUser) return;
 
             const title = document.getElementById('buildTitle').value;
             if (!title) {
-                alert("Lütfen sisteminiz için bir isim girin.");
+                alert("Lütfen sistem için bir başlık girin.");
                 return;
             }
 
@@ -485,7 +473,6 @@
             }
         }
 
-        // Kullanıcı Sistemlerini Yükleme
         async function loadUserBuilds() {
             if (!currentUser) return;
             const res = await fetch('/api/my-builds');
