@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware Lab | Yönetim Paneli</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Hardware Lab | Admin Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b0f17;
-            --card-bg: rgba(22, 27, 34, 0.75);
-            --card-border: rgba(255, 255, 255, 0.08);
+            --bg: #030712;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
             --primary: #38bdf8;
-            --danger: #ef4444;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
+            --danger: #f43f5e;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -21,56 +21,68 @@
         body {
             background-color: var(--bg);
             color: var(--text);
-            background-image: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+            background-image: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%);
             padding: 2rem;
-            min-height: 100vh;
         }
 
-        .header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 2rem; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem;
-        }
-
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         h1 { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
 
         .btn-home {
             background: rgba(255, 255, 255, 0.05); color: var(--text);
             padding: 0.6rem 1.2rem; border-radius: 10px; text-decoration: none;
-            border: 1px solid var(--card-border); font-weight: 600; transition: all 0.2s ease;
+            border: 1px solid var(--border); font-weight: 600;
         }
 
-        .btn-home:hover { background: rgba(255, 255, 255, 0.1); }
+        .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary); }
 
         .glass-panel {
             background: var(--card-bg); backdrop-filter: blur(12px);
-            border: 1px solid var(--card-border); border-radius: 16px;
-            padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border); border-radius: 16px;
+            padding: 1.5rem; margin-bottom: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-
-        h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
 
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--card-border); font-size: 0.9rem; }
-        th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        th { color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
 
-        .btn-delete {
-            background: rgba(239, 68, 68, 0.15); color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.4rem 0.8rem;
-            border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s ease;
+        .btn-del {
+            background: rgba(244, 63, 94, 0.2); color: var(--danger);
+            border: 1px solid rgba(244, 63, 94, 0.4); padding: 0.4rem 0.8rem;
+            border-radius: 6px; cursor: pointer; font-weight: 600;
         }
 
-        .btn-delete:hover { background: var(--danger); color: white; }
+        .btn-del:hover { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Admin Control Center</h1>
-        <a href="/" class="btn-home">← Ana Sayfaya Dön</a>
+        <h1>Admin Yönetim Merkezi</h1>
+        <a href="/" class="btn-home">← Siteme Dön</a>
     </div>
 
+    <!-- SİSTEM TOPLAMALAR -->
     <div class="glass-panel">
-        <h2>Kullanıcı Yorumları Yönetimi</h2>
+        <div class="section-title">🖥️ Oluşturulan Tüm Sistemler</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Kullanıcı</th>
+                    <th>Sistem Adı</th>
+                    <th>CPU ID</th>
+                    <th>GPU ID</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="buildsTable"></tbody>
+        </table>
+    </div>
+
+    <!-- YORUMLAR -->
+    <div class="glass-panel">
+        <div class="section-title">💬 Tüm Kullanıcı Yorumları</div>
         <table>
             <thead>
                 <tr>
@@ -82,43 +94,55 @@
                     <th>İşlem</th>
                 </tr>
             </thead>
-            <tbody id="reviewsTable">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Yükleniyor...</td></tr>
-            </tbody>
+            <tbody id="reviewsTable"></tbody>
         </table>
     </div>
 
     <script>
         async function loadAdminData() {
-            try {
-                const res = await fetch('/api/reviews');
-                if(res.ok) {
-                    const reviews = await res.json();
-                    const table = document.getElementById('reviewsTable');
-                    if(reviews.length === 0) {
-                        table.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Henüz yorum yapılmamış.</td></tr>';
-                        return;
-                    }
-                    table.innerHTML = reviews.map(r => `
-                        <tr>
-                            <td>#${r.id}</td>
-                            <td>${r.user_name || 'Anonim'}</td>
-                            <td>${r.component_id}</td>
-                            <td>⭐ ${r.rating}/5</td>
-                            <td>${r.comment}</td>
-                            <td><button class="btn-delete" onclick="deleteReview(${r.id})">Sil</button></td>
-                        </tr>
-                    `).join('');
-                }
-            } catch(e) {
-                console.error("Veri yükleme hatası:", e);
+            // Yorumlar
+            const resRev = await fetch('/api/reviews');
+            if(resRev.ok) {
+                const reviews = await resRev.json();
+                document.getElementById('reviewsTable').innerHTML = reviews.map(r => `
+                    <tr>
+                        <td>#${r.id}</td>
+                        <td>${r.user_name || 'Anonim'}</td>
+                        <td>${r.component_id}</td>
+                        <td>⭐ ${r.rating}</td>
+                        <td>${r.comment}</td>
+                        <td><button class="btn-del" onclick="deleteReview(${r.id})">Sil</button></td>
+                    </tr>
+                `).join('') || '<tr><td colspan="6">Yorum bulunamadı.</td></tr>';
+            }
+
+            // Sistemler
+            const resBld = await fetch('/api/all-builds');
+            if(resBld.ok) {
+                const builds = await resBld.json();
+                document.getElementById('buildsTable').innerHTML = builds.map(b => `
+                    <tr>
+                        <td>#${b.id}</td>
+                        <td>${b.user_name || 'Anonim'}</td>
+                        <td><strong>${b.title}</strong></td>
+                        <td>CPU: #${b.cpu_id}</td>
+                        <td>GPU: #${b.gpu_id}</td>
+                        <td><button class="btn-del" onclick="deleteBuild(${b.id})">Sil</button></td>
+                    </tr>
+                `).join('') || '<tr><td colspan="6">Sistem bulunamadı.</td></tr>';
             }
         }
 
         async function deleteReview(id) {
-            if(!confirm("Bu yorumu silmek istediğinize emin misiniz?")) return;
-            const res = await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
-            if(res.ok) loadAdminData();
+            if(!confirm("Bu yorumu silmek istiyor musunuz?")) return;
+            await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+            loadAdminData();
+        }
+
+        async function deleteBuild(id) {
+            if(!confirm("Bu sistemi silmek istiyor musunuz?")) return;
+            await fetch(`/api/admin/builds/${id}`, { method: 'DELETE' });
+            loadAdminData();
         }
 
         window.onload = loadAdminData;
