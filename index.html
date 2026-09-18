@@ -3,536 +3,508 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware Benchmark & System Lab</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Hardware Lab | Benchmark & Donanım Karşılaştırma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #090d16;
-            --card-bg: rgba(22, 30, 49, 0.7);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.35);
-            --accent-purple: #c084fc;
-            --accent-green: #34d399;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-main: #c9d1d9;
+            --text-bright: #ffffff;
+            --accent-blue: #58a6ff;
+            --accent-green: #2ea043;
+            --accent-gold: #d29922;
+            --hover-color: #1f242d;
         }
 
         * {
             box-sizing: border-box;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
-                radial-gradient(circle at 85% 85%, rgba(192, 132, 252, 0.1) 0%, transparent 40%);
-            background-attachment: fixed;
             color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 960px;
+            padding: 20px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         header {
-            text-align: center;
-            margin-bottom: 35px;
-        }
-
-        .logo-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0 0 8px 0;
-            letter-spacing: -1px;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin: 0;
-        }
-
-        .auth-container {
-            margin-top: 18px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
         }
 
-        .btn-google {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background-color: #ffffff;
-            color: #0f172a;
-            font-weight: 700;
-            font-size: 0.88rem;
-            padding: 8px 18px;
-            border-radius: 20px;
-            text-decoration: none;
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        .logo h1 {
+            color: var(--text-bright);
+            font-size: 24px;
         }
 
-        .btn-google:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
-        }
-
-        .user-profile {
+        .auth-status {
             display: flex;
             align-items: center;
-            gap: 10px;
-            background: rgba(15, 23, 42, 0.7);
-            padding: 6px 16px;
-            border-radius: 30px;
-            border: 1px solid var(--card-border);
-            backdrop-filter: blur(8px);
+            gap: 15px;
         }
 
         .user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 2px solid var(--primary);
+            border: 2px solid var(--accent-blue);
         }
 
-        .user-name {
-            font-weight: 700;
-            color: var(--primary);
-            font-size: 0.9rem;
-        }
-
-        .btn-logout {
-            color: #f87171;
+        .btn {
+            background-color: var(--accent-blue);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
             text-decoration: none;
-            font-size: 0.8rem;
-            margin-left: 8px;
-            padding-left: 8px;
-            border-left: 1px solid var(--card-border);
-            font-weight: 600;
-        }
-
-        .main-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 30px;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 6px;
-            border-radius: 16px;
-            border: 1px solid var(--card-border);
-            backdrop-filter: blur(12px);
-            max-width: 600px;
-            margin: 0 auto 30px auto;
-        }
-
-        .main-tab-btn {
-            flex: 1;
-            padding: 12px 16px;
-            font-size: 13px;
-            border-radius: 12px;
+            font-weight: 500;
             border: none;
-            background: transparent;
-            color: var(--text-muted);
             cursor: pointer;
-            font-weight: 700;
-            font-family: inherit;
+            transition: 0.2s;
         }
 
-        .main-tab-btn.active {
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 20px var(--primary-glow);
+        .btn:hover {
+            opacity: 0.9;
         }
 
-        .box {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 25px;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        .btn-success {
+            background-color: var(--accent-green);
         }
 
-        .box h2 {
-            margin-top: 0;
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        .inputs {
-            display: flex;
-            gap: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
         }
 
-        input, select, textarea {
-            flex: 1;
-            min-width: 150px;
-            padding: 14px 18px;
+        .card h2 {
+            color: var(--text-bright);
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
             font-size: 14px;
-            border-radius: 12px;
-            border: 1px solid var(--card-border);
-            background-color: rgba(10, 15, 29, 0.8);
-            color: #ffffff;
-            font-family: inherit;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-bright);
+            border-radius: 6px;
             outline: none;
         }
 
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+        textarea {
+            resize: vertical;
+            height: 80px;
         }
 
-        button.action-btn {
-            padding: 12px 20px;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 700;
-            font-family: inherit;
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-        }
-
-        button.action-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        .item-card {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid var(--card-border);
-            padding: 18px;
-            border-radius: 14px;
-            margin-top: 12px;
-        }
-
-        .item-card:hover {
-            border-color: rgba(56, 189, 248, 0.4);
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            align-items: center; justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: #0f172a;
-            border: 1px solid var(--card-border);
-            padding: 24px;
-            border-radius: 20px;
-            width: 90%; max-width: 480px;
-        }
-
-        .reviews-list {
-            max-height: 220px;
-            overflow-y: auto;
+        .compare-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
             margin-top: 15px;
         }
 
+        .compare-result {
+            background-color: var(--hover-color);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rating-stars {
+            color: var(--accent-gold);
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
         .review-item {
-            border-bottom: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--border-color);
             padding: 10px 0;
-            font-size: 0.88rem;
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-author {
+            color: var(--text-bright);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .badge-lock {
+            background-color: #21262d;
+            color: #8b949e;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            border: 1px dashed var(--border-color);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
     <header>
-        <h1 class="logo-title">Hardware Lab</h1>
-        <p class="subtitle">Ekran Kartı ve İşlemci Benchmark & Karşılaştırma</p>
-        
-        <div id="authContainer" class="auth-container">
-            <!-- Oturum Durumu JS ile Yönetilir -->
+        <div class="logo">
+            <h1>Hardware Lab</h1>
+        </div>
+        <div class="auth-status" id="authContainer">
+            <!-- JavaScript oturum durumuna göre burayı dolduracak -->
+            <a href="/auth/google" class="btn">Google ile Giriş Yap</a>
         </div>
     </header>
 
-    <!-- Ana Sekmeler -->
-    <div class="main-tabs">
-        <button class="main-tab-btn active" id="btnGpuTab" onclick="openTab('gpuTab', 'btnGpuTab')">🎮 Ekran Kartları</button>
-        <button class="main-tab-btn" id="btnCpuTab" onclick="openTab('cpuTab', 'btnCpuTab')">⚡ İşlemciler</button>
-        <button class="main-tab-btn" id="btnCompareTab" onclick="openTab('compareTab', 'btnCompareTab')">⚔️ Karşılaştırma</button>
-    </div>
-
-    <!-- GPU Sekmesi -->
-    <div id="gpuTab" class="tab-content">
-        <div class="box">
-            <h2>🎮 Ekran Kartı Listesi</h2>
-            <div id="gpuList">
-                <p style="color:var(--text-muted);">Yükleniyor...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- CPU Sekmesi -->
-    <div id="cpuTab" class="tab-content" style="display: none;">
-        <div class="box">
-            <h2>⚡ İşlemci Listesi</h2>
-            <div id="cpuList">
-                <p style="color:var(--text-muted);">Yükleniyor...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Karşılaştırma Sekmesi -->
-    <div id="compareTab" class="tab-content" style="display: none;">
-        <div class="box">
-            <h2>⚔️ Donanım Karşılaştır</h2>
-            <div class="inputs">
-                <select id="compCategory" onchange="updateDropdowns()">
-                    <option value="gpu">🎮 Ekran Kartı Karşılaştır</option>
-                    <option value="cpu">⚡ İşlemci Karşılaştır</option>
+    <!-- 1. DÖŞEME: İşlemci ve Ekran Kartı Karşılaştırma Modülü -->
+    <section class="card" style="margin-bottom: 25px;">
+        <h2>İşlemci / GPU Karşılaştırma</h2>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label for="compType">Kategori</label>
+                <select id="compType" onchange="loadCompareOptions()">
+                    <option value="cpu">İşlemci (CPU)</option>
+                    <option value="gpu">Ekran Kartı (GPU)</option>
                 </select>
-                <select id="item1Select"><option value="">1. Parça</option></select>
-                <select id="item2Select"><option value="">2. Parça</option></select>
-                <button class="action-btn" onclick="runCompare()">Karşılaştır</button>
             </div>
-            <div id="compareResult"></div>
+            <div style="flex: 1; min-width: 200px;">
+                <label for="comp1">1. Donanım</label>
+                <select id="comp1"></select>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label for="comp2">2. Donanım</label>
+                <select id="comp2"></select>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn" onclick="executeCompare()">Karşılaştır</button>
+            </div>
         </div>
-    </div>
-</div>
 
-<!-- Yorum ve Yıldız Modalı -->
-<div id="reviewModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle" style="margin-top: 0; color: var(--primary);">Yorumlar</h3>
-        <input type="hidden" id="modalType">
-        <input type="hidden" id="modalId">
+        <div id="compareResults" class="compare-box" style="display: none;">
+            <div class="compare-result" id="res1"></div>
+            <div class="compare-result" id="res2"></div>
+        </div>
+    </section>
 
-        <div id="reviewFormArea"></div>
+    <div class="grid-container">
+        
+        <!-- 2. DÖŞEME: Sistem Toplama (PC Builder) Modülü -->
+        <div class="card">
+            <h2>Kendi Sistemini Topla</h2>
+            <div id="builderAuthLock" class="badge-lock" style="display: none; margin-bottom: 15px;">
+                Sistem kaydedebilmek için Google ile giriş yapmalısınız.
+            </div>
+            <div class="form-group">
+                <label for="buildTitle">Sistem Adı</label>
+                <input type="text" id="buildTitle" placeholder="Örn: Oyun Bilgisayarım 2026">
+            </div>
+            <div class="form-group">
+                <label for="buildCpu">İşlemci Seç</label>
+                <select id="buildCpu"></select>
+            </div>
+            <div class="form-group">
+                <label for="buildGpu">Ekran Kartı Seç</label>
+                <select id="buildGpu"></select>
+            </div>
+            <button class="btn btn-success" style="width: 100%;" onclick="saveBuild()">Sistemi Kaydet</button>
 
-        <div class="reviews-list" id="reviewsContainer"></div>
-        <button class="action-btn" style="margin-top: 15px; width: 100%; background: #334155;" onclick="closeModal()">Kapat</button>
-    </div>
-</div>
+            <div style="margin-top: 20px;">
+                <h3 style="font-size: 14px; color: var(--text-bright); margin-bottom: 10px;">Kaydedilen Sistemlerim</h3>
+                <div id="myBuildsList"></div>
+            </div>
+        </div>
 
-<script>
-let gpus = [];
-let cpus = [];
+        <!-- 3. DÖŞEME: Yorum Yapma & Puan Verme Modülü -->
+        <div class="card">
+            <h2>Donanım Değerlendirme & Yorum</h2>
+            
+            <div id="reviewAuthLock" class="badge-lock" style="display: none; margin-bottom: 15px;">
+                Yorum yapabilmek ve puan verebilmek için Google hesabınızla giriş yapın.
+            </div>
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await checkUser();
-    await fetchHardware();
-});
-
-async function checkUser() {
-    try {
-        const res = await fetch('/api/me');
-        const data = await res.json();
-        const authDiv = document.getElementById('authContainer');
-
-        if (data.authenticated) {
-            authDiv.innerHTML = `
-                <div class="user-profile">
-                    <img src="${data.user.picture}" class="user-avatar" alt="">
-                    <span class="user-name">${data.user.name}</span>
-                    <a href="/logout" class="btn-logout">Çıkış Yap</a>
+            <form id="reviewForm" onsubmit="submitReview(event)">
+                <div class="form-group">
+                    <label for="reviewComponent">Donanım Seç</label>
+                    <select id="reviewComponent"></select>
                 </div>
-            `;
-        } else {
-            authDiv.innerHTML = `
-                <a href="/login/google" class="btn-google">
-                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                    Google ile Giriş Yap
-                </a>
-            `;
+                <div class="form-group">
+                    <label for="reviewRating">Puanınız</label>
+                    <select id="reviewRating">
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                        <option value="3">⭐⭐⭐ (3/5)</option>
+                        <option value="2">⭐⭐ (2/5)</option>
+                        <option value="1">⭐ (1/5)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reviewComment">Yorumunuz</label>
+                    <textarea id="reviewComment" placeholder="Donanım performansı hakkında fikirlerinizi yazın..." required></textarea>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;" id="btnReviewSubmit">Yorumu Gönder</button>
+            </form>
+
+            <div style="margin-top: 20px;">
+                <h3 style="font-size: 14px; color: var(--text-bright); margin-bottom: 10px;">Son Değerlendirmeler</h3>
+                <div id="reviewsList"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentUser = null;
+        let componentsData = [];
+
+        // Sayfa yüklendiğinde çalışacak başlatıcı
+        async function init() {
+            await checkAuth();
+            await fetchComponents();
+            loadCompareOptions();
+            loadUserBuilds();
+            loadReviews();
         }
-    } catch(e) { console.error(e); }
-}
 
-async function fetchHardware() {
-    try {
-        const [rGpu, rCpu] = await Promise.all([fetch('/api/gpus'), fetch('/api/cpus')]);
-        gpus = await rGpu.json();
-        cpus = await rCpu.json();
+        // Oturum Kontrolü (FastAPI /api/me veya session yapınıza bağlıdır)
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/me');
+                if (res.ok) {
+                    currentUser = await res.json();
+                    renderAuthUser();
+                } else {
+                    renderAuthGuest();
+                }
+            } catch (e) {
+                renderAuthGuest();
+            }
+        }
 
-        renderGpus();
-        renderCpus();
-        updateDropdowns();
-    } catch (e) {
-        console.error("Veri çekilemedi:", e);
-    }
-}
+        function renderAuthUser() {
+            document.getElementById('authContainer').innerHTML = `
+                <img src="${currentUser.picture || 'https://via.placeholder.com/36'}" class="user-avatar" alt="Profil">
+                <span style="color: var(--text-bright); font-weight: 500;">${currentUser.name}</span>
+                <a href="/logout" class="btn" style="background-color: #21262d;">Çıkış</a>
+            `;
+            document.getElementById('reviewAuthLock').style.display = 'none';
+            document.getElementById('builderAuthLock').style.display = 'none';
+        }
 
-function renderGpus() {
-    const list = document.getElementById('gpuList');
-    if (!gpus || gpus.length === 0) {
-        list.innerHTML = `<p style="color:var(--text-muted);">Henüz ekran kartı eklenmemiş.</p>`;
-        return;
-    }
-    list.innerHTML = gpus.map(g => `
-        <div class="item-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0; color:#fff; font-size:1.05rem;">${g.isim}</h3>
-                <span style="color:var(--primary); font-weight:800;">${g.puan} Puan</span>
-            </div>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin:8px 0;">VRAM: ${g.vram} | F/P: ${g.fiyat_performans}</p>
-            <button class="action-btn" style="padding: 6px 12px; font-size:0.78rem;" onclick="openReviewModal('gpu', ${g.id}, '${g.isim}')">⭐ Yorum Yap & Puan Ver</button>
-        </div>
-    `).join('');
-}
+        function renderAuthGuest() {
+            document.getElementById('authContainer').innerHTML = `
+                <a href="/auth/google" class="btn">Google ile Giriş Yap</a>
+            `;
+            document.getElementById('reviewAuthLock').style.display = 'block';
+            document.getElementById('builderAuthLock').style.display = 'block';
+            
+            // Giriş yapılmadıysa form alanlarını kısıtla
+            document.getElementById('btnReviewSubmit').disabled = true;
+            document.getElementById('btnReviewSubmit').style.opacity = '0.5';
+        }
 
-function renderCpus() {
-    const list = document.getElementById('cpuList');
-    if (!cpus || cpus.length === 0) {
-        list.innerHTML = `<p style="color:var(--text-muted);">Henüz işlemci eklenmemiş.</p>`;
-        return;
-    }
-    list.innerHTML = cpus.map(c => `
-        <div class="item-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0; color:#fff; font-size:1.05rem;">${c.isim}</h3>
-                <span style="color:var(--accent-purple); font-weight:800;">${c.puan} Puan</span>
-            </div>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin:8px 0;">Çekirdek: ${c.cekirdek} | F/P: ${c.fiyat_performans}</p>
-            <button class="action-btn" style="padding: 6px 12px; font-size:0.78rem;" onclick="openReviewModal('cpu', ${c.id}, '${c.isim}')">⭐ Yorum Yap & Puan Ver</button>
-        </div>
-    `).join('');
-}
+        // Donanımları Çekme ve Seçim Kutularını Doldurma
+        async function fetchComponents() {
+            try {
+                const res = await fetch('/api/components');
+                if (res.ok) {
+                    componentsData = await res.json();
+                    populateDropdowns();
+                }
+            } catch (e) {
+                console.error("Donanım listesi çekilemedi:", e);
+            }
+        }
 
-function updateDropdowns() {
-    const cat = document.getElementById('compCategory').value;
-    const items = cat === 'gpu' ? gpus : cpus;
-    const s1 = document.getElementById('item1Select');
-    const s2 = document.getElementById('item2Select');
+        function populateDropdowns() {
+            const buildCpu = document.getElementById('buildCpu');
+            const buildGpu = document.getElementById('buildGpu');
+            const reviewComp = document.getElementById('reviewComponent');
 
-    s1.innerHTML = items.map(i => `<option value="${i.isim}">${i.isim}</option>`).join('');
-    s2.innerHTML = items.map(i => `<option value="${i.isim}">${i.isim}</option>`).join('');
-}
+            buildCpu.innerHTML = '';
+            buildGpu.innerHTML = '';
+            reviewComp.innerHTML = '';
 
-async function runCompare() {
-    const cat = document.getElementById('compCategory').value;
-    const i1 = document.getElementById('item1Select').value;
-    const i2 = document.getElementById('item2Select').value;
+            componentsData.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = `${item.brand} ${item.model}`;
 
-    if (!i1 || !i2) return;
+                if (item.type === 'cpu') buildCpu.appendChild(opt.cloneNode(true));
+                if (item.type === 'gpu') buildGpu.appendChild(opt.cloneNode(true));
+                reviewComp.appendChild(opt.cloneNode(true));
+            });
+        }
 
-    const url = cat === 'gpu' ? `/api/karsilastir?gpu1=${i1}&gpu2=${i2}` : `/api/karsilastir/cpu?cpu1=${i1}&cpu2=${i2}`;
-    const res = await fetch(url);
-    if (res.ok) {
-        const d = await res.json();
-        const o1 = d.kart_1 || d.cpu_1;
-        const o2 = d.kart_2 || d.cpu_2;
+        // Karşılaştırma Seçeneklerini Güncelleme
+        function loadCompareOptions() {
+            const type = document.getElementById('compType').value;
+            const comp1 = document.getElementById('comp1');
+            const comp2 = document.getElementById('comp2');
 
-        document.getElementById('compareResult').innerHTML = `
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:15px;">
-                <div class="item-card">
-                    <h4 style="margin:0 0 8px 0;">${o1.isim}</h4>
-                    <p style="margin:0; font-size:0.9rem;">Puan: <strong>${o1.puan}</strong></p>
-                </div>
-                <div class="item-card">
-                    <h4 style="margin:0 0 8px 0;">${o2.isim}</h4>
-                    <p style="margin:0; font-size:0.9rem;">Puan: <strong>${o2.puan}</strong></p>
-                </div>
-            </div>
-            <div style="text-align:center; margin-top:12px; color:var(--accent-green); font-weight:bold;">
-                🏆 Kazanan: ${d.kazanan} (${d.puan_farki} Puan Fark)
-            </div>
-        `;
-    }
-}
+            comp1.innerHTML = '';
+            comp2.innerHTML = '';
 
-function openTab(tabId, btnId) {
-    document.querySelectorAll('.tab-content').forEach(e => e.style.display = 'none');
-    document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+            const filtered = componentsData.filter(c => c.type === type);
+            filtered.forEach(item => {
+                const opt1 = new Option(`${item.brand} ${item.model}`, item.id);
+                const opt2 = new Option(`${item.brand} ${item.model}`, item.id);
+                comp1.add(opt1);
+                comp2.add(opt2);
+            });
+            if (comp2.options.length > 1) comp2.selectedIndex = 1;
+        }
 
-    document.getElementById(tabId).style.display = 'block';
-    document.getElementById(btnId).classList.add('active');
-}
+        // Karşılaştırma İşlemi
+        async function executeCompare() {
+            const id1 = document.getElementById('comp1').value;
+            const id2 = document.getElementById('comp2').value;
 
-async function openReviewModal(type, id, name) {
-    document.getElementById('modalType').value = type;
-    document.getElementById('modalId').value = id;
-    document.getElementById('modalTitle').innerText = name + " - Yorumlar";
+            if (!id1 || !id2) return;
 
-    const authRes = await fetch('/api/me');
-    const authData = await authRes.json();
-    const formArea = document.getElementById('reviewFormArea');
+            const res = await fetch(`/api/compare?comp1_id=${id1}&comp2_id=${id2}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.length >= 2) {
+                    document.getElementById('compareResults').style.display = 'grid';
+                    document.getElementById('res1').innerHTML = `
+                        <h3 style="color:var(--accent-blue)">${data[0].brand} ${data[0].model}</h3>
+                        <p style="margin-top:8px;"><strong>Skor:</strong> ${data[0].score}</p>
+                    `;
+                    document.getElementById('res2').innerHTML = `
+                        <h3 style="color:var(--accent-blue)">${data[1].brand} ${data[1].model}</h3>
+                        <p style="margin-top:8px;"><strong>Skor:</strong> ${data[1].score}</p>
+                    `;
+                }
+            }
+        }
 
-    if(authData.authenticated) {
-        formArea.innerHTML = `
-            <div style="margin-bottom:8px;">
-                <select id="modalStars" style="padding:6px;"><option value="5">⭐⭐⭐⭐⭐ 5</option><option value="4">⭐⭐⭐⭐ 4</option><option value="3">⭐⭐⭐ 3</option></select>
-            </div>
-            <textarea id="modalComment" placeholder="Yorumunuz..." style="width:100%; height:50px; margin-bottom:8px;"></textarea>
-            <button class="action-btn" style="width:100%;" onclick="sendReview()">Gönder</button>
-        `;
-    } else {
-        formArea.innerHTML = `<p style="color:#fbbf24; font-size:0.85rem;">Yorum yapmak için Google ile giriş yapmalısınız.</p>`;
-    }
+        // Yorum Gönderme
+        async function submitReview(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                alert("Yorum yapabilmek için Google ile giriş yapmalısınız.");
+                return;
+            }
 
-    await loadReviews(type, id);
-    document.getElementById('reviewModal').style.display = 'flex';
-}
+            const body = {
+                component_id: parseInt(document.getElementById('reviewComponent').value),
+                rating: parseInt(document.getElementById('reviewRating').value),
+                comment: document.getElementById('reviewComment').value
+            };
 
-async function loadReviews(type, id) {
-    const res = await fetch(`/api/yorumlar/${type}/${id}`);
-    const reviews = await res.json();
-    const container = document.getElementById('reviewsContainer');
-    
-    if(reviews.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">Henüz yorum yapılmadı.</p>`;
-        return;
-    }
+            const res = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
 
-    container.innerHTML = reviews.map(r => `
-        <div class="review-item">
-            <div style="display:flex; justify-content:space-between;">
-                <strong style="color:var(--primary);">${r.user_name}</strong>
-                <span style="color:#f59e0b;">⭐ ${r.yildiz}/5</span>
-            </div>
-            <p style="margin:4px 0 0 0; color:#e2e8f0;">${r.yorum}</p>
-        </div>
-    `).join('');
-}
+            if (res.ok) {
+                document.getElementById('reviewComment').value = '';
+                loadReviews();
+            } else {
+                alert("Yorum kaydedilemedi.");
+            }
+        }
 
-async function sendReview() {
-    const type = document.getElementById('modalType').value;
-    const id = document.getElementById('modalId').value;
-    const yildiz = document.getElementById('modalStars').value;
-    const yorum = document.getElementById('modalComment').value;
+        // Yorumları Listeleme
+        async function loadReviews() {
+            const res = await fetch('/api/reviews');
+            if (res.ok) {
+                const list = await res.json();
+                const container = document.getElementById('reviewsList');
+                container.innerHTML = '';
+                list.forEach(r => {
+                    container.innerHTML += `
+                        <div class="review-item">
+                            <div class="review-author">${r.user_name || 'Kullanıcı'}</div>
+                            <div class="rating-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+                            <p style="font-size: 13px;">${r.comment}</p>
+                        </div>
+                    `;
+                });
+            }
+        }
 
-    const formData = new FormData();
-    formData.append('parca_tipi', type);
-    formData.append('parca_id', id);
-    formData.append('yildiz', yildiz);
-    formData.append('yorum', yorum);
+        // Sistem Kaydetme
+        async function saveBuild() {
+            if (!currentUser) {
+                alert("Sisteminizi kaydedebilmek için Google ile giriş yapmalısınız.");
+                return;
+            }
 
-    const res = await fetch('/api/yorum-ekle', { method: 'POST', body: formData });
-    if(res.ok) {
-        document.getElementById('modalComment').value = '';
-        loadReviews(type, id);
-    }
-}
+            const title = document.getElementById('buildTitle').value;
+            if (!title) {
+                alert("Lütfen sisteminiz için bir isim girin.");
+                return;
+            }
 
-function closeModal() {
-    document.getElementById('reviewModal').style.display = 'none';
-}
-</script>
+            const body = {
+                title: title,
+                cpu_id: parseInt(document.getElementById('buildCpu').value),
+                gpu_id: parseInt(document.getElementById('buildGpu').value)
+            };
+
+            const res = await fetch('/api/builds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                document.getElementById('buildTitle').value = '';
+                loadUserBuilds();
+            }
+        }
+
+        // Kullanıcı Sistemlerini Yükleme
+        async function loadUserBuilds() {
+            if (!currentUser) return;
+            const res = await fetch('/api/my-builds');
+            if (res.ok) {
+                const builds = await res.json();
+                const container = document.getElementById('myBuildsList');
+                container.innerHTML = '';
+                builds.forEach(b => {
+                    container.innerHTML += `
+                        <div style="background:var(--bg-color); padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid var(--border-color);">
+                            <strong style="color:var(--text-bright); display:block;">${b.title}</strong>
+                            <span style="font-size:12px; color:#8b949e;">CPU ID: ${b.cpu_id} | GPU ID: ${b.gpu_id}</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        window.onload = init;
+    </script>
 </body>
 </html>
