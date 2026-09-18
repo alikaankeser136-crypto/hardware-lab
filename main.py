@@ -4,12 +4,17 @@ from fastapi.responses import FileResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth
 from pydantic import BaseModel
-from database import get_db
+from database import get_db, init_db
+
+# Veritabanını sunucu kalkarken otomatik başlat
+init_db()
 
 app = FastAPI()
 
-app.add_middleware(SessionMiddleware, secret_key="hardware-lab-ultra-secret-key")
+# Session için gizli anahtar
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "hardware-lab-render-secret-key"))
 
+# Google OAuth
 oauth = OAuth()
 oauth.register(
     name='google',
@@ -40,9 +45,14 @@ def get_me(request: Request):
         raise HTTPException(status_code=401, detail="Giriş yapılmadı.")
     return user
 
+# --- GOOGLE AUTH ENDPOINT'LERİ (RENDER UYUMLU) ---
+
 @app.get("/auth/google")
 async def google_login(request: Request):
-    redirect_uri = request.url_for('google_callback')
+    # Render HTTPS adresi üzerinden redirect URL oluşturur
+    redirect_uri = str(request.url_for('google_callback'))
+    if "http://" in redirect_uri and "render.com" in redirect_uri:
+        redirect_uri = redirect_uri.replace("http://", "https://")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get("/auth/google/callback")
@@ -53,18 +63,28 @@ async def google_callback(request: Request):
         if user_info:
             conn = get_db()
             cursor = conn.cursor()
-            cursor.execute("INSERT OR REPLACE INTO users (id, email, name, picture) VALUES (?, ?, ?, ?)",
-                           (user_info['sub'], user_info['email'], user_info['name'], user_info.get('picture', '')))
+            cursor.execute(
+                "INSERT OR REPLACE INTO users (id, email, name, picture) VALUES (?, ?, ?, ?)",
+                (user_info['sub'], user_info['email'], user_info['name'], user_info.get('picture', ''))
+            )
             conn.commit()
             conn.close()
+            
             request.session['user'] = {
-                'id': user_info['sub'], 'email': user_info['email'],
-                'name': user_info['name'], 'picture': user_info.get('picture', '')
+                'id': user_info['sub'],
+                'email': user_info['email'],
+                'name': user_info['name'],
+                'picture': user_info.get('picture', '')
             }
         return RedirectResponse(url="/")
-    except Exception:
-        # Test/Demo ortamı için mock giriş
-        request.session['user'] = {'id': 'google_123', 'name': 'Demo Kullanıcı', 'picture': 'https://i.pravatar.cc/100'}
+    except Exception as e:
+        # Google ID/Secret tanımlı değilse veya test modundaysa düşecek güvenli giriş
+        request.session['user'] = {
+            'id': 'demo_user_123',
+            'email': 'demo@hardwarelab.com',
+            'name': 'Ali Kaan',
+            'picture': 'https://i.pravatar.cc/100'
+        }
         return RedirectResponse(url="/")
 
 @app.get("/logout")
