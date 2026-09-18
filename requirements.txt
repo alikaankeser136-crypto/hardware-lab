@@ -1,10 +1,6 @@
 fastapi
 uvicorn
-sqlalchemy
-pydantic
-starlette
 authlib
-itsdangerous
 httpx
-jinja2
-python-multipart
+itsdangerous
+pydantic
