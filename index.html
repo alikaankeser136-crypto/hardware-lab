@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware Lab | Donanım & Performans Hub</title>
+    <title>Hardware Lab | Donanım & Benchmark Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -37,135 +37,68 @@
             z-index: 100;
         }
 
-        .logo {
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            color: var(--accent-blue);
-        }
-
+        .logo { font-size: 1.6rem; font-weight: 800; color: var(--accent-blue); }
         .logo span { color: #fff; }
-
         .auth-box { display: flex; align-items: center; gap: 15px; }
         
         .btn-google {
-            background: #fff;
-            color: #000;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            background: #fff; color: #000; padding: 8px 16px; border-radius: 8px;
+            font-weight: 600; text-decoration: none; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 8px;
         }
 
         .btn-logout {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            padding: 6px 14px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 600;
+            background: rgba(239, 68, 68, 0.2); color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4); padding: 6px 14px;
+            border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600;
         }
 
         .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .section-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 15px; }
 
         .card {
             background: var(--bg-card);
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
+            border-radius: 16px; padding: 25px; margin-bottom: 30px;
         }
 
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 
         input, select, button {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: #0d1322;
-            color: #fff;
-            font-family: inherit;
-            box-sizing: border-box;
-            margin-top: 6px;
+            width: 100%; padding: 12px 16px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); background: #0d1322;
+            color: #fff; font-family: inherit; box-sizing: border-box; margin-top: 6px;
         }
 
         button.action-btn {
             background: linear-gradient(135deg, #0284c7, #2563eb);
-            color: white;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: opacity 0.2s;
+            color: white; font-weight: 700; border: none; cursor: pointer; margin-top: 15px;
         }
 
-        button.action-btn:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { color: var(--text-dim); font-size: 0.85rem; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        th { color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
         .badge-nvidia { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
         .badge-amd { background: rgba(239, 68, 68, 0.2); color: #f87171; }
         .badge-intel { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
 
-        .result-box {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 10px;
-            background: rgba(13, 19, 34, 0.8);
-            display: none;
-        }
+        .result-box { margin-top: 15px; padding: 15px; border-radius: 10px; background: rgba(13, 19, 34, 0.8); display: none; }
+        .rate-btn { padding: 2px 6px; font-size: 0.75rem; width: auto; margin: 0; background: #334155; cursor: pointer; border: none; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo">HARDWARE<span>LAB</span></div>
-        <div class="auth-box" id="authBox">
-            <!-- JS dinamik dolduracak -->
-        </div>
+        <div class="auth-box" id="authBox"></div>
     </header>
 
     <div class="container">
 
         <!-- Performans Sıralaması -->
-        <div class="section-title">🔥 Performans Sıralaması</div>
+        <div class="section-title">🔥 Performans Sıralaması ve Google Oy Verme</div>
         <div class="card">
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <button onclick="loadList('gpu')" class="action-btn" style="margin:0;">Ekran Kartları (GPU)</button>
@@ -179,52 +112,53 @@
                         <th>Puan</th>
                         <th>Detay</th>
                         <th>F/P</th>
+                        <th>Google Oy Ver</th>
                     </tr>
                 </thead>
-                <tbody id="rankingTableBody">
-                    <tr><td colspan="5">Yükleniyor...</td></tr>
-                </tbody>
+                <tbody id="rankingTableBody"></tbody>
             </table>
         </div>
 
-        <!-- Özel Sistem Toplayıcı & Darboğaz Testi -->
-        <div class="grid-2">
-            <div class="card">
-                <div class="section-title">⚖️ Darboğaz (Bottleneck) Testi</div>
-                <label>Ekran Kartı:</label>
-                <input type="text" id="bnGpu" placeholder="Örn: RTX 4060">
-                <label>İşlemci:</label>
-                <input type="text" id="bnCpu" placeholder="Örn: Ryzen 5 5600">
-                <button class="action-btn" onclick="checkBottleneck()">Hesapla</button>
-                <div id="bnResult" class="result-box"></div>
+        <!-- Özel Sistem Toplama (CPU, GPU, RAM, SSD) -->
+        <div class="card">
+            <div class="section-title">🖥️ Özel Sistem Toplayıcı</div>
+            <div class="grid-2">
+                <div>
+                    <label>İşlemci (CPU):</label>
+                    <select id="pcCpu"></select>
+                </div>
+                <div>
+                    <label>Ekran Kartı (GPU):</label>
+                    <select id="pcGpu"></select>
+                </div>
+                <div>
+                    <label>Bellek (RAM):</label>
+                    <select id="pcRam">
+                        <option value="8">8 GB DDR4/DDR5</option>
+                        <option value="16" selected>16 GB DDR4/DDR5</option>
+                        <option value="32">32 GB DDR4/DDR5</option>
+                        <option value="64">64 GB DDR4/DDR5</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Depolama (SSD):</label>
+                    <select id="pcSsd">
+                        <option value="512">512 GB NVMe M.2 SSD</option>
+                        <option value="1024" selected>1 TB NVMe M.2 SSD</option>
+                        <option value="2048">2 TB NVMe M.2 SSD</option>
+                    </select>
+                </div>
             </div>
-
-            <div class="card">
-                <div class="section-title">🎯 Oyun Kaldırır mı?</div>
-                <label>Ekran Kartı:</label>
-                <input type="text" id="cirGpu" placeholder="Örn: GTX 1650">
-                <label>İşlemci:</label>
-                <input type="text" id="cirCpu" placeholder="Örn: i5-12400F">
-                <label>RAM (GB):</label>
-                <input type="number" id="cirRam" value="16">
-                <label>Oyun:</label>
-                <select id="cirGame">
-                    <option value="valorant">Valorant</option>
-                    <option value="cs2">Counter-Strike 2</option>
-                    <option value="cyberpunk">Cyberpunk 2077</option>
-                    <option value="gtav">GTA V</option>
-                    <option value="rdr2">Red Dead Redemption 2</option>
-                </select>
-                <button class="action-btn" onclick="checkCanIRun()">Test Et</button>
-                <div id="cirResult" class="result-box"></div>
-            </div>
+            <button class="action-btn" onclick="buildPc()">Sistemi Değerlendir ve Puanla</button>
+            <div id="pcResult" class="result-box"></div>
         </div>
 
-        <!-- FPS & Karşılaştırma -->
+        <!-- FPS Hesaplayıcı (CPU + GPU) -->
         <div class="grid-2">
             <div class="card">
-                <div class="section-title">🎮 FPS Tahminleyici</div>
-                <input type="text" id="fpsGpu" placeholder="Ekran Kartı Modeliniz...">
+                <div class="section-title">🎮 FPS Hesaplayıcı (CPU + GPU)</div>
+                <input type="text" id="fpsGpu" placeholder="Ekran Kartı (Örn: RTX 4060)">
+                <input type="text" id="fpsCpu" placeholder="İşlemci (Örn: Ryzen 5 5600)">
                 <select id="fpsRes">
                     <option value="1080p">1080p Full HD</option>
                     <option value="1440p">1440p 2K</option>
@@ -234,11 +168,16 @@
                 <div id="fpsResult" class="result-box"></div>
             </div>
 
+            <!-- CPU ve GPU Karşılaştırma -->
             <div class="card">
-                <div class="section-title">⚔️ GPU Karşılaştırma</div>
-                <input type="text" id="compGpu1" placeholder="1. Kart (Örn: RTX 3060)">
-                <input type="text" id="compGpu2" placeholder="2. Kart (Örn: RX 6700 XT)">
-                <button class="action-btn" onclick="compareGpus()">Karşılaştır</button>
+                <div class="section-title">⚔️ Donanım Karşılaştırma</div>
+                <select id="compType" onchange="toggleCompType()">
+                    <option value="gpu">Ekran Kartı (GPU) Karşılaştır</option>
+                    <option value="cpu">İşlemci (CPU) Karşılaştır</option>
+                </select>
+                <input type="text" id="comp1" placeholder="1. Parça (Örn: RTX 3060 / Ryzen 5600)">
+                <input type="text" id="comp2" placeholder="2. Parça (Örn: RX 6700 XT / i5 12400F)">
+                <button class="action-btn" onclick="compareHardware()">Karşılaştır</button>
                 <div id="compResult" class="result-box"></div>
             </div>
         </div>
@@ -246,38 +185,47 @@
     </div>
 
     <script>
-        // --- AUTH DURUMU ---
+        let isUserLoggedIn = false;
+        let globalGpus = [];
+        let globalCpus = [];
+
         async function checkAuth() {
             try {
                 const res = await fetch('/api/me');
                 const data = await res.json();
                 const authBox = document.getElementById('authBox');
-                if (data.authenticated && data.user) {
-                    const userName = data.user.name || data.user.given_name || "Kullanıcı";
+                if (data.authenticated) {
+                    isUserLoggedIn = true;
                     authBox.innerHTML = `
-                        <span style="font-weight: 600;">👤 ${userName}</span>
+                        <span style="font-weight: 600;">👤 ${data.name}</span>
                         <a href="/logout" class="btn-logout">Çıkış</a>
                     `;
                 } else {
+                    isUserLoggedIn = false;
                     authBox.innerHTML = `
                         <a href="/login/google" class="btn-google">
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18"> Google ile Giriş
                         </a>
                     `;
                 }
-            } catch(e) {
-                console.error("Auth hatası", e);
-            }
+            } catch(e) {}
         }
 
-        // --- SIRALAMA LİSTESİ ---
-        async function loadList(type = 'gpu') {
+        async function loadData() {
+            const [gpuRes, cpuRes] = await Promise.all([fetch('/api/gpus'), fetch('/api/cpus')]);
+            globalGpus = await gpuRes.json();
+            globalCpus = await cpuRes.json();
+
+            // Sistem toplayıcı dropdown'larını doldur
+            document.getElementById('pcGpu').innerHTML = globalGpus.map(g => `<option value="${g.id}">${g.isim}</option>`).join('');
+            document.getElementById('pcCpu').innerHTML = globalCpus.map(c => `<option value="${c.id}">${c.isim}</option>`).join('');
+
+            loadList('gpu');
+        }
+
+        function loadList(type = 'gpu') {
             const tbody = document.getElementById('rankingTableBody');
-            tbody.innerHTML = '<tr><td colspan="5">Yükleniyor...</td></tr>';
-            
-            const endpoint = type === 'gpu' ? '/api/gpus' : '/api/cpus';
-            const res = await fetch(endpoint);
-            const items = await res.json();
+            const items = type === 'gpu' ? globalGpus : globalCpus;
 
             tbody.innerHTML = items.map(item => `
                 <tr>
@@ -286,105 +234,87 @@
                     <td><strong style="color:var(--accent-blue)">${item.puan}</strong></td>
                     <td>${item.vram || item.cekirdek || '-'}</td>
                     <td>${item.fiyat_performans}</td>
+                    <td>
+                        <button class="rate-btn" onclick="rateItem('${type}', ${item.id}, 5)">⭐ 5</button>
+                        <button class="rate-btn" onclick="rateItem('${type}', ${item.id}, 4)">⭐ 4</button>
+                    </td>
                 </tr>
             `).join('');
         }
 
-        // --- DARBOĞAZ ---
-        async function checkBottleneck() {
-            const gpu = document.getElementById('bnGpu').value;
-            const cpu = document.getElementById('bnCpu').value;
-            const resBox = document.getElementById('bnResult');
-            if(!gpu || !cpu) return alert("Lütfen iki alanı da doldurun");
+        async function rateItem(type, id, rating) {
+            if(!isUserLoggedIn) return alert("Puan vermek için lütfen Google hesabınızla giriş yapın!");
+            const formData = new FormData();
+            formData.append('donanim_tipi', type);
+            formData.append('donanim_id', id);
+            formData.append('puan', rating);
 
-            resBox.style.display = 'block';
-            resBox.innerHTML = 'Hesaplanıyor...';
-
-            const res = await fetch(`/api/bottleneck?gpu=${encodeURIComponent(gpu)}&cpu=${encodeURIComponent(cpu)}`);
-            if(!res.ok) {
-                resBox.innerHTML = '<span style="color:#f87171">Bileşenlerden biri bulunamadı.</span>';
-                return;
-            }
+            const res = await fetch('/api/rate', { method: 'POST', body: formData });
             const data = await res.json();
+            alert(data.message || data.detail);
+        }
+
+        async function buildPc() {
+            const formData = new FormData();
+            formData.append('cpu_id', document.getElementById('pcCpu').value);
+            formData.append('gpu_id', document.getElementById('pcGpu').value);
+            formData.append('ram_gb', document.getElementById('pcRam').value);
+            formData.append('ssd_gb', document.getElementById('pcSsd').value);
+
+            const res = await fetch('/api/build-pc', { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            const resBox = document.getElementById('pcResult');
+            resBox.style.display = 'block';
             resBox.innerHTML = `
-                <div style="font-weight:bold; color:${data.renk}">${data.durum}</div>
-                <div>Darboğaz Oranı: <strong>${data.darbogaz_yuzdesi}</strong></div>
+                <div style="font-size:1.1rem; font-weight:bold; color:var(--accent-blue)">Toplanan Sistem Skoru: ${data.sistem_puani} Puan</div>
+                <div><strong>İşlemci:</strong> ${data.cpu} | <strong>GPU:</strong> ${data.gpu}</div>
+                <div><strong>Bellek:</strong> ${data.ram} | <strong>Depolama:</strong> ${data.ssd}</div>
+                <div style="margin-top:8px; color:#fbbf24">${data.degerlendirme}</div>
             `;
         }
 
-        // --- OYUN KALDIRIR MI ---
-        async function checkCanIRun() {
-            const gpu = document.getElementById('cirGpu').value;
-            const cpu = document.getElementById('cirCpu').value;
-            const ram = document.getElementById('cirRam').value;
-            const game = document.getElementById('cirGame').value;
-            const resBox = document.getElementById('cirResult');
-
-            if(!gpu || !cpu) return alert("Lütfen kart ve işlemci girin");
-            resBox.style.display = 'block';
-            resBox.innerHTML = 'Test ediliyor...';
-
-            const res = await fetch(`/api/can-i-run?gpu=${encodeURIComponent(gpu)}&cpu=${encodeURIComponent(cpu)}&ram=${ram}&game=${game}`);
-            if(!res.ok) {
-                resBox.innerHTML = '<span style="color:#f87171">Bilgiler kontrol edilemedi.</span>';
-                return;
-            }
-            const data = await res.json();
-            resBox.innerHTML = `
-                <div style="font-weight:bold; color:${data.renk}">${data.oyun}: ${data.durum}</div>
-                <ul style="margin:5px 0 0 0; padding-left:20px; font-size:0.9rem;">
-                    ${data.detaylar.map(d => `<li>${d}</li>`).join('')}
-                </ul>
-            `;
-        }
-
-        // --- FPS TAHMİNİ ---
         async function getFps() {
             const gpu = document.getElementById('fpsGpu').value;
+            const cpu = document.getElementById('fpsCpu').value;
             const resVal = document.getElementById('fpsRes').value;
             const resBox = document.getElementById('fpsResult');
 
-            if(!gpu) return alert("Kart adı girin");
+            if(!gpu) return alert("Ekran kartı adı yazmalısınız.");
             resBox.style.display = 'block';
-            resBox.innerHTML = 'FPS Hesaplanıyor...';
+            resBox.innerHTML = 'Hesaplanıyor...';
 
-            const res = await fetch(`/api/fps/${encodeURIComponent(gpu)}?res=${resVal}`);
-            if(!res.ok) {
-                resBox.innerHTML = '<span style="color:#f87171">Kart bulunamadı.</span>';
-                return;
-            }
+            const res = await fetch(`/api/fps?gpu=${encodeURIComponent(gpu)}&cpu=${encodeURIComponent(cpu)}&res=${resVal}`);
+            if(!res.ok) { resBox.innerHTML = 'Bileşen bulunamadı'; return; }
             const data = await res.json();
+
             resBox.innerHTML = `
-                <div style="font-weight:bold; margin-bottom:5px;">${data.kart} (${data.cozunurluk})</div>
+                <div style="font-weight:bold;">${data.kart} (${data.cozunurluk})</div>
                 ${Object.entries(data.oyunlar).map(([g, fps]) => `<div>${g}: <strong>${fps}</strong></div>`).join('')}
             `;
         }
 
-        // --- GPU KARŞILAŞTIRMA ---
-        async function compareGpus() {
-            const g1 = document.getElementById('compGpu1').value;
-            const g2 = document.getElementById('compGpu2').value;
+        async function compareHardware() {
+            const type = document.getElementById('compType').value;
+            const item1 = document.getElementById('comp1').value;
+            const item2 = document.getElementById('comp2').value;
             const resBox = document.getElementById('compResult');
 
-            if(!g1 || !g2) return alert("İki kart modelini de girin");
+            if(!item1 || !item2) return alert("İki parçayı da yazın.");
             resBox.style.display = 'block';
-            resBox.innerHTML = 'Karşılaştırılıyor...';
 
-            const res = await fetch(`/api/karsilastir?gpu1=${encodeURIComponent(g1)}&gpu2=${encodeURIComponent(g2)}`);
-            if(!res.ok) {
-                resBox.innerHTML = '<span style="color:#f87171">Kartlardan biri veritabanında bulunamadı.</span>';
-                return;
-            }
+            const res = await fetch(`/api/karsilastir/${type}?${type}1=${encodeURIComponent(item1)}&${type}2=${encodeURIComponent(item2)}`);
+            if(!res.ok) { resBox.innerHTML = 'Parçalar bulunamadı'; return; }
             const data = await res.json();
+
             resBox.innerHTML = `
                 <div style="font-weight:bold; color:#34d399">🏆 Kazanan: ${data.kazanan}</div>
                 <div>Fark: ${data.puan_farki} Puan (${data.yuzde_fark})</div>
             `;
         }
 
-        // Başlangıç Yüklemeleri
         checkAuth();
-        loadList('gpu');
+        loadData();
     </script>
 </body>
 </html>
