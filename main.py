@@ -11,10 +11,8 @@ from database import get_db_connection, init_db
 
 app = FastAPI(title="Hardware Lab Benchmark API")
 
-# Session Middleware
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "super-secret-key-hardware-lab"))
 
-# OAuth Yapılandırması
 oauth = OAuth()
 oauth.register(
     name='google',
@@ -42,11 +40,7 @@ def check_admin(credentials: HTTPBasicCredentials = Depends(security)):
     is_user_correct = secrets.compare_digest(credentials.username, ADMIN_USER)
     is_pass_correct = secrets.compare_digest(credentials.password, ADMIN_PASS)
     if not (is_user_correct and is_pass_correct):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Hatalı kullanıcı adı veya şifre",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+        raise HTTPException(status_code=401, detail="Yetkisiz", headers={"WWW-Authenticate": "Basic"})
     return credentials.username
 
 def is_in_maintenance():
@@ -59,12 +53,10 @@ def is_in_maintenance():
 def startup_event():
     init_db()
 
-# --- HEALTH CHECK (UPTIMEROBOT) ---
 @app.get("/api/health")
 def health_check():
-    return {"status": "ok", "service": "Hardware Lab"}
+    return {"status": "ok"}
 
-# --- GOOGLE AUTH ROTALARI ---
 @app.get("/login/google")
 async def login_via_google(request: Request):
     redirect_uri = request.url_for('auth_google_callback')
@@ -90,167 +82,62 @@ async def logout(request: Request):
 async def get_current_user(request: Request):
     user = request.session.get('user')
     if user:
-        # Front-end'in 'undefined' vermemesi için name bilgisini doğrudan iletiyoruz
         return {
             "authenticated": True, 
             "user": user,
-            "name": user.get("name", user.get("given_name", "Kullanıcı"))
+            "name": user.get("name", user.get("given_name", "Kullanıcı")),
+            "email": user.get("email")
         }
     return {"authenticated": False}
 
-# --- ANA SAYFA ---
 @app.get("/")
 def home():
     if is_in_maintenance():
-        return HTMLResponse(
-            content="""
-            <!DOCTYPE html>
-            <html lang="tr">
-            <head>
-                <meta charset="UTF-8">
-                <title>Sitemiz Bakımdadır</title>
-                <style>
-                    body { background: #090d16; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
-                    h1 { color: #f87171; font-size: 2.5rem; margin-bottom: 10px; }
-                    p { color: #94a3b8; font-size: 1.1rem; }
-                </style>
-            </head>
-            <body>
-                <h1>🛠️ Sitemiz Geçici Olarak Bakımdadır</h1>
-                <p>Donanım verilerimizi ve sistemimizi güncelliyoruz.<br>Lütfen kısa bir süre sonra tekrar ziyaret edin.</p>
-            </body>
-            </html>
-            """,
-            headers=NO_CACHE_HEADERS
-        )
+        return HTMLResponse("<h1>🛠️ Sitemiz Bakımdadır</h1>", headers=NO_CACHE_HEADERS)
     return FileResponse("index.html", headers=NO_CACHE_HEADERS)
 
-# --- ADMIN ROTALARI ---
-@app.get("/admin", response_class=HTMLResponse)
-def admin_panel(username: str = Depends(check_admin)):
-    return FileResponse("admin.html", headers=NO_CACHE_HEADERS)
+# --- GOOGLE OYLAMA / PUAN VERME ---
+@app.post("/api/rate")
+async def rate_hardware(request: Request, donanim_tipi: str = Form(...), donanim_id: int = Form(...), puan: int = Form(...)):
+    user = request.session.get('user')
+    if not user or not user.get("email"):
+        raise HTTPException(status_code=401, detail="Puan vermek için Google ile giriş yapmalısınız!")
+    
+    if puan < 1 or puan > 5:
+        raise HTTPException(status_code=400, detail="Puan 1 ile 5 arasında olmalıdır.")
 
-@app.get("/api/admin/bakim-durumu")
-def get_bakim_durumu(username: str = Depends(check_admin)):
-    return {"bakim": "1" if is_in_maintenance() else "0"}
-
-@app.post("/admin/toggle-maintenance")
-def toggle_maintenance(username: str = Depends(check_admin)):
     conn = get_db_connection()
-    mevcut = conn.execute("SELECT deger FROM ayarlar WHERE anahtar = 'bakim_modu'").fetchone()["deger"]
-    yeni_durum = "0" if mevcut == "1" else "1"
-    conn.execute("UPDATE ayarlar SET deger = ? WHERE anahtar = 'bakim_modu'", (yeni_durum,))
-    conn.commit()
-    conn.close()
-    return RedirectResponse(url="/admin", status_code=303)
+    try:
+        conn.execute("""
+            INSERT INTO oy_sistemi (user_email, donanim_tipi, donanim_id, puan) 
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_email, donanim_tipi, donanim_id) 
+            DO UPDATE SET puan = excluded.puan
+        """, (user["email"], donanim_tipi, donanim_id, puan))
+        conn.commit()
+    finally:
+        conn.close()
+    
+    return {"status": "success", "message": "Puanınız kaydedildi!"}
 
-@app.post("/admin/add-gpu")
-def add_gpu(isim: str = Form(...), puan: int = Form(...), marka: str = Form(...), vram: str = Form(...), fiyat_performans: str = Form(...), username: str = Depends(check_admin)):
-    conn = get_db_connection()
-    conn.execute("INSERT INTO gpus (isim, puan, marka, vram, fiyat_performans) VALUES (?, ?, ?, ?, ?)",
-                 (isim, puan, marka.lower(), vram, fiyat_performans))
-    conn.commit()
-    conn.close()
-    return RedirectResponse(url="/admin", status_code=303)
-
-@app.post("/admin/add-cpu")
-def add_cpu(isim: str = Form(...), puan: int = Form(...), marka: str = Form(...), cekirdek: str = Form(...), fiyat_performans: str = Form(...), username: str = Depends(check_admin)):
-    conn = get_db_connection()
-    conn.execute("INSERT INTO cpus (isim, puan, marka, cekirdek, fiyat_performans) VALUES (?, ?, ?, ?, ?)",
-                 (isim, puan, marka.lower(), cekirdek, fiyat_performans))
-    conn.commit()
-    conn.close()
-    return RedirectResponse(url="/admin", status_code=303)
-
-@app.post("/admin/delete-gpu/{gpu_id}")
-def delete_gpu(gpu_id: int, username: str = Depends(check_admin)):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM gpus WHERE id = ?", (gpu_id,))
-    conn.commit()
-    conn.close()
-    return RedirectResponse(url="/admin", status_code=303)
-
-@app.post("/admin/delete-cpu/{cpu_id}")
-def delete_cpu(cpu_id: int, username: str = Depends(check_admin)):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM cpus WHERE id = ?", (cpu_id,))
-    conn.commit()
-    conn.close()
-    return RedirectResponse(url="/admin", status_code=303)
-
-# --- PUBLIC API ROTALARI ---
+# --- PUBLIC APIS ---
 @app.get("/api/gpus")
 def get_all_gpus():
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
     conn = get_db_connection()
     gpus = conn.execute("SELECT * FROM gpus ORDER BY puan DESC").fetchall()
     conn.close()
     return [dict(g) for g in gpus]
 
-@app.get("/api/gpu/{gpu_name}")
-def search_gpu(gpu_name: str):
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
-    conn = get_db_connection()
-    all_gpus = conn.execute("SELECT * FROM gpus").fetchall()
-    conn.close()
-    
-    q = clean_query(gpu_name)
-    results = [dict(g) for g in all_gpus if q in clean_query(g["isim"])]
-    return sorted(results, key=lambda x: x["puan"], reverse=True)
-
 @app.get("/api/cpus")
 def get_all_cpus():
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
     conn = get_db_connection()
     cpus = conn.execute("SELECT * FROM cpus ORDER BY puan DESC").fetchall()
     conn.close()
     return [dict(c) for c in cpus]
 
-@app.get("/api/cpu/{cpu_name}")
-def search_cpu(cpu_name: str):
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
-    conn = get_db_connection()
-    all_cpus = conn.execute("SELECT * FROM cpus").fetchall()
-    conn.close()
-    
-    q = clean_query(cpu_name)
-    results = [dict(c) for c in all_cpus if q in clean_query(c["isim"])]
-    return sorted(results, key=lambda x: x["puan"], reverse=True)
-
-@app.get("/api/fps/{gpu_name}")
-def predict_fps(gpu_name: str, res: str = "1080p"):
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
-    conn = get_db_connection()
-    all_gpus = conn.execute("SELECT * FROM gpus").fetchall()
-    conn.close()
-
-    q = clean_query(gpu_name)
-    bulunan = next((dict(g) for g in all_gpus if q in clean_query(g["isim"])), None)
-
-    if not bulunan:
-        raise HTTPException(status_code=404, detail="Kart bulunamadı")
-        
-    puan = bulunan["puan"]
-    mult = 1.0 if res == "1080p" else (0.72 if res == "1440p" else 0.45)
-
-    fps_verileri = {
-        "Valorant (Low/Comp)": f"{max(30, int((puan * 0.038 + 180) * (1 if res=='1080p' else mult * 1.1)))} FPS",
-        "CS2 (Very High)": f"{max(20, int((puan * 0.012 + 90) * mult))} FPS",
-        "Cyberpunk 2077 (Ultra)": f"{max(10, int((puan * 0.0032 + 25) * mult))} FPS",
-        "GTA V (Very High)": f"{max(25, int((puan * 0.0045 + 60) * mult))} FPS",
-        "RDR 2 (Ultra)": f"{max(15, int((puan * 0.0028 + 20) * mult))} FPS"
-    }
-    return {"kart": bulunan["isim"], "cozunurluk": res.upper(), "oyunlar": fps_verileri}
-
-@app.get("/api/karsilastir")
+# GPU KARŞILAŞTIRMA
+@app.get("/api/karsilastir/gpu")
 def compare_gpus(gpu1: str, gpu2: str):
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
     conn = get_db_connection()
     all_gpus = conn.execute("SELECT * FROM gpus").fetchall()
     conn.close()
@@ -260,49 +147,91 @@ def compare_gpus(gpu1: str, gpu2: str):
     k2 = next((dict(g) for g in all_gpus if g2_q in clean_query(g["isim"])), None)
     
     if not k1 or not k2:
-        raise HTTPException(status_code=404, detail="Kartlerden biri bulunamadı")
+        raise HTTPException(status_code=404, detail="Kartlardan biri bulunamadı")
         
     fark = abs(k1["puan"] - k2["puan"])
-    yuzde = round((fark / min(k1["puan"], k2["puan"])) * 100, 1)
+    yuzde = round((fark / min(k1["puan"], k2["puan"])) * 100, 1) if min(k1["puan"], k2["puan"]) > 0 else 0
     kazanan = k1["isim"] if k1["puan"] > k2["puan"] else k2["isim"]
-    return {"kart_1": k1, "kart_2": k2, "kazanan": kazanan, "puan_farki": fark, "yuzde_fark": f"%{yuzde} daha hızlı"}
+    return {"item_1": k1, "item_2": k2, "kazanan": kazanan, "puan_farki": fark, "yuzde_fark": f"%{yuzde} daha hızlı"}
 
-@app.get("/api/can-i-run")
-def can_i_run(gpu: str, cpu: str, ram: int, game: str):
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
+# CPU KARŞILAŞTIRMA
+@app.get("/api/karsilastir/cpu")
+def compare_cpus(cpu1: str, cpu2: str):
+    conn = get_db_connection()
+    all_cpus = conn.execute("SELECT * FROM cpus").fetchall()
+    conn.close()
+
+    c1_q, c2_q = clean_query(cpu1), clean_query(cpu2)
+    k1 = next((dict(c) for c in all_cpus if c1_q in clean_query(c["isim"])), None)
+    k2 = next((dict(c) for c in all_cpus if c2_q in clean_query(c["isim"])), None)
+    
+    if not k1 or not k2:
+        raise HTTPException(status_code=404, detail="İşlemcilerden biri bulunamadı")
+        
+    fark = abs(k1["puan"] - k2["puan"])
+    yuzde = round((fark / min(k1["puan"], k2["puan"])) * 100, 1) if min(k1["puan"], k2["puan"]) > 0 else 0
+    kazanan = k1["isim"] if k1["puan"] > k2["puan"] else k2["isim"]
+    return {"item_1": k1, "item_2": k2, "kazanan": kazanan, "puan_farki": fark, "yuzde_fark": f"%{yuzde} daha performanslı"}
+
+# CPU + GPU İLE FPS HESAPLAYICI
+@app.get("/api/fps")
+def predict_fps(gpu: str, cpu: str = "", res: str = "1080p"):
     conn = get_db_connection()
     all_gpus = conn.execute("SELECT * FROM gpus").fetchall()
     all_cpus = conn.execute("SELECT * FROM cpus").fetchall()
-    game_obj = conn.execute("SELECT * FROM oyunlar WHERE kod = ? LIMIT 1", (game.lower(),)).fetchone()
     conn.close()
 
-    gpu_q, cpu_q = clean_query(gpu), clean_query(cpu)
-    gpu_obj = next((dict(g) for g in all_gpus if gpu_q in clean_query(g["isim"])), None)
-    cpu_obj = next((dict(c) for c in all_cpus if cpu_q in clean_query(c["isim"])), None)
+    g_obj = next((dict(g) for g in all_gpus if clean_query(gpu) in clean_query(g["isim"])), None)
+    if not g_obj:
+        raise HTTPException(status_code=404, detail="Ekran kartı bulunamadı")
+        
+    gpu_puan = g_obj["puan"]
+    cpu_puan = gpu_puan # Varsayılan
 
-    if not gpu_obj or not cpu_obj or not game_obj:
-        raise HTTPException(status_code=404, detail="Bileşenler veya oyun bulunamadı")
+    if cpu:
+        c_obj = next((dict(c) for c in all_cpus if clean_query(cpu) in clean_query(c["isim"])), None)
+        if c_obj:
+            cpu_puan = c_obj["puan"]
 
-    gpu_puan, cpu_puan = gpu_obj["puan"], cpu_obj["puan"]
-    status, renk, detaylar = "ÖNERİLEN / ULTRA", "#34d399", []
+    # Darboğaz hesabı faktörü
+    faktör = min(1.0, cpu_puan / (gpu_puan * 0.9)) if gpu_puan > 0 else 1.0
+    mult = 1.0 if res == "1080p" else (0.72 if res == "1440p" else 0.45)
 
-    if gpu_puan < game_obj["gpu_min"]:
-        status, renk = "KALDIRMAZ / ZORLANIR", "#f87171"
-        detaylar.append(f"Ekran kartınız ({gpu_obj['isim']}) bu oyun için yetersiz kalabilir.")
-    elif gpu_puan < game_obj["gpu_rec"]:
-        status, renk = "MİNİMUM / DÜŞÜK AYARLAR", "#fbbf24"
-        detaylar.append("Ekran kartınız minimum seviyede, düşük/orta ayarlarda oynayabilirsiniz.")
+    fps_verileri = {
+        "Valorant (Low)": f"{max(30, int((gpu_puan * 0.038 + 180) * faktör * (1 if res=='1080p' else mult * 1.1)))} FPS",
+        "CS2 (High)": f"{max(20, int((gpu_puan * 0.012 + 90) * faktör * mult))} FPS",
+        "Cyberpunk 2077 (Ultra)": f"{max(10, int((gpu_puan * 0.0032 + 25) * mult))} FPS",
+        "GTA V (Ultra)": f"{max(25, int((gpu_puan * 0.0045 + 60) * faktör * mult))} FPS"
+    }
+    return {"kart": g_obj["isim"], "cozunurluk": res.upper(), "oyunlar": fps_verileri}
 
-    if cpu_puan < game_obj["cpu_min"]:
-        status, renk = "KALDIRMAZ / ZORLANIR", "#f87171"
-        detaylar.append(f"İşlemciniz ({cpu_obj['isim']}) darboğaz yapabilir.")
+# SİSTEM TOPLAMA VE UYUMLULUK ANALİZİ (CPU, GPU, RAM, SSD)
+@app.post("/api/build-pc")
+def build_pc(cpu_id: int = Form(...), gpu_id: int = Form(...), ram_gb: int = Form(...), ssd_gb: int = Form(...)):
+    conn = get_db_connection()
+    cpu = conn.execute("SELECT * FROM cpus WHERE id = ?", (cpu_id,)).fetchone()
+    gpu = conn.execute("SELECT * FROM gpus WHERE id = ?", (gpu_id,)).fetchone()
+    conn.close()
 
-    if ram < game_obj["ram_min"]:
-        status, renk = "KALDIRMAZ / ZORLANIR", "#f87171"
-        detaylar.append(f"RAM miktarınız ({ram} GB) minimum gereksinimden ({game_obj['ram_min']} GB) düşük.")
+    if not cpu or not gpu:
+        raise HTTPException(status_code=400, detail="Bileşen bulunamadı")
 
-    if not detaylar:
-        detaylar.append("Sisteminiz bu oyunu yüksek ayarlarda çalıştırmak için fazlasıyla yeterli! 🔥")
+    toplam_puan = cpu["puan"] + gpu["puan"] + (ram_gb * 100)
+    
+    # Darboğaz Oranı
+    oratio = cpu["puan"] / gpu["puan"]
+    if oratio < 0.7:
+        darbogaz_notu = "⚠️ İşlemciniz bu ekran kartının yanında biraz zayıf kalabilir (Darboğaz riski)."
+    elif oratio > 1.4:
+        darbogaz_notu = "ℹ️ Ekran kartınız işlemcinize göre zayıf kalıyor."
+    else:
+        darbogaz_notu = "🔥 Mükemmel Denge! CPU ve GPU tam uyumlu çalışır."
 
-    return {"oyun": game_obj["isim"], "durum": status, "renk": renk, "detaylar": detaylar}
+    return {
+        "sistem_puani": toplam_puan,
+        "cpu": cpu["isim"],
+        "gpu": gpu["isim"],
+        "ram": f"{ram_gb} GB RAM",
+        "ssd": f"{ssd_gb} GB NVMe SSD",
+        "degerlendirme": darbogaz_notu
+    }
