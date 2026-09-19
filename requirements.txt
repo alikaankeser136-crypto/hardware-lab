@@ -1,6 +1,6 @@
 fastapi
 uvicorn
 authlib
+starlette
 httpx
-itsdangerous
-pydantic
+python-multipart
