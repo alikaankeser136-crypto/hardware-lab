@@ -96,12 +96,12 @@ def home():
         return HTMLResponse("<h1>🛠️ Sitemiz Bakımdadır</h1>", headers=NO_CACHE_HEADERS)
     return FileResponse("index.html", headers=NO_CACHE_HEADERS)
 
-# --- GOOGLE OYLAMA / PUAN VERME ---
+# --- OY VERME ---
 @app.post("/api/rate")
 async def rate_hardware(request: Request, donanim_tipi: str = Form(...), donanim_id: int = Form(...), puan: int = Form(...)):
     user = request.session.get('user')
     if not user or not user.get("email"):
-        raise HTTPException(status_code=401, detail="Puan vermek için Google ile giriş yapmalısınız!")
+        raise HTTPException(status_code=401, detail="Puan vermek için giriş yapmalısınız!")
     
     if puan < 1 or puan > 5:
         raise HTTPException(status_code=400, detail="Puan 1 ile 5 arasında olmalıdır.")
@@ -135,7 +135,6 @@ def get_all_cpus():
     conn.close()
     return [dict(c) for c in cpus]
 
-# GPU KARŞILAŞTIRMA
 @app.get("/api/karsilastir/gpu")
 def compare_gpus(gpu1: str, gpu2: str):
     conn = get_db_connection()
@@ -154,7 +153,6 @@ def compare_gpus(gpu1: str, gpu2: str):
     kazanan = k1["isim"] if k1["puan"] > k2["puan"] else k2["isim"]
     return {"item_1": k1, "item_2": k2, "kazanan": kazanan, "puan_farki": fark, "yuzde_fark": f"%{yuzde} daha hızlı"}
 
-# CPU KARŞILAŞTIRMA
 @app.get("/api/karsilastir/cpu")
 def compare_cpus(cpu1: str, cpu2: str):
     conn = get_db_connection()
@@ -173,7 +171,6 @@ def compare_cpus(cpu1: str, cpu2: str):
     kazanan = k1["isim"] if k1["puan"] > k2["puan"] else k2["isim"]
     return {"item_1": k1, "item_2": k2, "kazanan": kazanan, "puan_farki": fark, "yuzde_fark": f"%{yuzde} daha performanslı"}
 
-# CPU + GPU İLE FPS HESAPLAYICI
 @app.get("/api/fps")
 def predict_fps(gpu: str, cpu: str = "", res: str = "1080p"):
     conn = get_db_connection()
@@ -186,14 +183,13 @@ def predict_fps(gpu: str, cpu: str = "", res: str = "1080p"):
         raise HTTPException(status_code=404, detail="Ekran kartı bulunamadı")
         
     gpu_puan = g_obj["puan"]
-    cpu_puan = gpu_puan # Varsayılan
+    cpu_puan = gpu_puan
 
     if cpu:
         c_obj = next((dict(c) for c in all_cpus if clean_query(cpu) in clean_query(c["isim"])), None)
         if c_obj:
             cpu_puan = c_obj["puan"]
 
-    # Darboğaz hesabı faktörü
     faktör = min(1.0, cpu_puan / (gpu_puan * 0.9)) if gpu_puan > 0 else 1.0
     mult = 1.0 if res == "1080p" else (0.72 if res == "1440p" else 0.45)
 
@@ -205,7 +201,6 @@ def predict_fps(gpu: str, cpu: str = "", res: str = "1080p"):
     }
     return {"kart": g_obj["isim"], "cozunurluk": res.upper(), "oyunlar": fps_verileri}
 
-# SİSTEM TOPLAMA VE UYUMLULUK ANALİZİ (CPU, GPU, RAM, SSD)
 @app.post("/api/build-pc")
 def build_pc(cpu_id: int = Form(...), gpu_id: int = Form(...), ram_gb: int = Form(...), ssd_gb: int = Form(...)):
     conn = get_db_connection()
@@ -218,7 +213,6 @@ def build_pc(cpu_id: int = Form(...), gpu_id: int = Form(...), ram_gb: int = For
 
     toplam_puan = cpu["puan"] + gpu["puan"] + (ram_gb * 100)
     
-    # Darboğaz Oranı
     oratio = cpu["puan"] / gpu["puan"]
     if oratio < 0.7:
         darbogaz_notu = "⚠️ İşlemciniz bu ekran kartının yanında biraz zayıf kalabilir (Darboğaz riski)."
