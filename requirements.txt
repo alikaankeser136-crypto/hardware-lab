@@ -4,3 +4,4 @@ authlib
 starlette
 httpx
 python-multipart
+itsdangerous
