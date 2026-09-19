@@ -3,247 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware Lab | Donanım & Performans Portalı</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Hardware Lab | Donanım & Performans Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #030712;
-            --card-bg: rgba(17, 24, 39, 0.7);
-            --border: rgba(255, 255, 255, 0.08);
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.25);
-            --nvidia: #76b900;
-            --amd: #ed1d24;
-            --intel: #0071c5;
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
+            --bg-main: #090d16;
+            --bg-card: rgba(22, 30, 49, 0.7);
+            --accent-blue: #38bdf8;
+            --accent-purple: #c084fc;
+            --text-white: #f8fafc;
+            --text-dim: #94a3b8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            background-image: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
-                              radial-gradient(at 100% 100%, rgba(118, 185, 0, 0.08) 0px, transparent 50%);
-            min-height: 100vh;
-            padding: 2rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-white);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
         }
 
         header {
-            display: flex; justify-content: space-between; align-items: center;
-            max-width: 1200px; margin: 0 auto 3rem auto; padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 8%;
+            background: rgba(9, 13, 22, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-shadow: 0 0 20px var(--primary-glow); }
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--accent-blue);
+        }
+
         .logo span { color: #fff; }
 
-        .user-nav { display: flex; align-items: center; gap: 1rem; }
-        .btn-auth {
-            background: rgba(56, 189, 248, 0.1); color: var(--primary);
-            border: 1px solid var(--primary); padding: 0.6rem 1.2rem;
-            border-radius: 10px; font-weight: 700; text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        .btn-auth:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary-glow); }
-
-        .container { max-width: 1200px; margin: 0 auto; display: grid; gap: 3rem; }
-
-        .section-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
-
-        /* HIGH-END CHART TASARIMI */
-        .chart-card {
-            background: var(--card-bg); backdrop-filter: blur(12px);
-            border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        .auth-box { display: flex; align-items: center; gap: 15px; }
+        
+        .btn-google {
+            background: #fff;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .chart-item {
-            display: grid; grid-template-columns: 180px 1fr 80px; align-items: center; gap: 1rem;
-            margin-bottom: 1rem; padding: 0.8rem; border-radius: 10px; background: rgba(255,255,255,0.02);
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 6px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
 
-        .chart-name { font-weight: 700; font-size: 0.95rem; }
-        .chart-bar-bg { background: rgba(255,255,255,0.05); height: 12px; border-radius: 6px; overflow: hidden; position: relative; }
-        .chart-bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease-in-out; }
-        .chart-score { font-weight: 800; text-align: right; color: var(--primary); }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
 
-        /* COLOR BRANDS */
-        .brand-NVIDIA .chart-bar-fill { background: var(--nvidia); box-shadow: 0 0 10px rgba(118,185,0,0.5); }
-        .brand-AMD .chart-bar-fill { background: var(--amd); box-shadow: 0 0 10px rgba(237,29,36,0.5); }
-        .brand-Intel .chart-bar-fill { background: var(--intel); box-shadow: 0 0 10px rgba(0,113,197,0.5); }
-
-        /* SİSTEM TOPLAMA PANELİ */
-        .build-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .select-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        .select-group label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
-        select, input {
-            background: rgba(0,0,0,0.4); border: 1px solid var(--border);
-            color: #fff; padding: 0.8rem; border-radius: 10px; outline: none; font-weight: 600;
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        select:focus, input:focus { border-color: var(--primary); }
 
-        .btn-submit {
-            background: var(--primary); color: #000; border: none; padding: 0.8rem 1.5rem;
-            border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%;
-            transition: all 0.2s ease;
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
         }
-        .btn-submit:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #0d1322;
+            color: #fff;
+            font-family: inherit;
+            box-sizing: border-box;
+            margin-top: 6px;
+        }
+
+        button.action-btn {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: white;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: opacity 0.2s;
+        }
+
+        button.action-btn:hover { opacity: 0.9; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th { color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-nvidia { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge-amd { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .badge-intel { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(13, 19, 34, 0.8);
+            display: none;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo">HARDWARE<span>LAB</span></div>
-        <div class="user-nav" id="userNav">
-            <a href="/auth/google" class="btn-auth">Google ile Giriş Yap</a>
+        <div class="auth-box" id="authBox">
+            <!-- JS dinamik dolduracak -->
         </div>
     </header>
 
     <div class="container">
 
-        <!-- HIGH END BENCHMARK CHART -->
-        <section>
-            <div class="section-title">🔥 High-End Performans Sıralaması</div>
-            <div class="chart-card" id="chartContainer">
-                <!-- JavaScript ile yüklenecek -->
+        <!-- Performans Sıralaması -->
+        <div class="section-title">🔥 Performans Sıralaması</div>
+        <div class="card">
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button onclick="loadList('gpu')" class="action-btn" style="margin:0;">Ekran Kartları (GPU)</button>
+                <button onclick="loadList('cpu')" class="action-btn" style="margin:0; background: #334155;">İşlemciler (CPU)</button>
             </div>
-        </section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Marka</th>
+                        <th>Puan</th>
+                        <th>Detay</th>
+                        <th>F/P</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingTableBody">
+                    <tr><td colspan="5">Yükleniyor...</td></tr>
+                </tbody>
+            </table>
+        </div>
 
-        <!-- SİSTEM TOPLAYICI (GELİŞMİŞ) -->
-        <section>
-            <div class="section-title">🖥️ Özel Sistem Toplayıcı</div>
-            <div class="chart-card">
-                <input type="text" id="buildTitle" placeholder="Sistem Adı (Örn: Canavar PC 2026)" style="width: 100%; margin-bottom: 1.5rem;">
-                
-                <div class="build-grid">
-                    <div class="select-group">
-                        <label>İşlemci (CPU)</label>
-                        <select id="selectCpu"><option value="">Seçiniz...</option></select>
-                    </div>
-                    <div class="select-group">
-                        <label>Ekran Kartı (GPU)</label>
-                        <select id="selectGpu"><option value="">Seçiniz...</option></select>
-                    </div>
-                    <div class="select-group">
-                        <label>Anakart (MOBO)</label>
-                        <select id="selectMobo"><option value="">Seçiniz...</option></select>
-                    </div>
-                    <div class="select-group">
-                        <label>Bellek (RAM)</label>
-                        <select id="selectRam"><option value="">Seçiniz...</option></select>
-                    </div>
-                    <div class="select-group">
-                        <label>Depolama (SSD)</label>
-                        <select id="selectSsd"><option value="">Seçiniz...</option></select>
-                    </div>
-                    <div class="select-group">
-                        <label>Güç Kaynağı (PSU)</label>
-                        <select id="selectPsu"><option value="">Seçiniz...</option></select>
-                    </div>
-                </div>
-
-                <button class="btn-submit" onclick="saveBuild()">Sistemi Kaydet</button>
+        <!-- Özel Sistem Toplayıcı & Darboğaz Testi -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="section-title">⚖️ Darboğaz (Bottleneck) Testi</div>
+                <label>Ekran Kartı:</label>
+                <input type="text" id="bnGpu" placeholder="Örn: RTX 4060">
+                <label>İşlemci:</label>
+                <input type="text" id="bnCpu" placeholder="Örn: Ryzen 5 5600">
+                <button class="action-btn" onclick="checkBottleneck()">Hesapla</button>
+                <div id="bnResult" class="result-box"></div>
             </div>
-        </section>
+
+            <div class="card">
+                <div class="section-title">🎯 Oyun Kaldırır mı?</div>
+                <label>Ekran Kartı:</label>
+                <input type="text" id="cirGpu" placeholder="Örn: GTX 1650">
+                <label>İşlemci:</label>
+                <input type="text" id="cirCpu" placeholder="Örn: i5-12400F">
+                <label>RAM (GB):</label>
+                <input type="number" id="cirRam" value="16">
+                <label>Oyun:</label>
+                <select id="cirGame">
+                    <option value="valorant">Valorant</option>
+                    <option value="cs2">Counter-Strike 2</option>
+                    <option value="cyberpunk">Cyberpunk 2077</option>
+                    <option value="gtav">GTA V</option>
+                    <option value="rdr2">Red Dead Redemption 2</option>
+                </select>
+                <button class="action-btn" onclick="checkCanIRun()">Test Et</button>
+                <div id="cirResult" class="result-box"></div>
+            </div>
+        </div>
+
+        <!-- FPS & Karşılaştırma -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="section-title">🎮 FPS Tahminleyici</div>
+                <input type="text" id="fpsGpu" placeholder="Ekran Kartı Modeliniz...">
+                <select id="fpsRes">
+                    <option value="1080p">1080p Full HD</option>
+                    <option value="1440p">1440p 2K</option>
+                    <option value="4k">4K Ultra HD</option>
+                </select>
+                <button class="action-btn" onclick="getFps()">FPS Hesapla</button>
+                <div id="fpsResult" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">⚔️ GPU Karşılaştırma</div>
+                <input type="text" id="compGpu1" placeholder="1. Kart (Örn: RTX 3060)">
+                <input type="text" id="compGpu2" placeholder="2. Kart (Örn: RX 6700 XT)">
+                <button class="action-btn" onclick="compareGpus()">Karşılaştır</button>
+                <div id="compResult" class="result-box"></div>
+            </div>
+        </div>
 
     </div>
 
     <script>
-        let allComponents = [];
-
-        async function init() {
-            // Kullanıcı Durumu
+        // --- AUTH DURUMU ---
+        async function checkAuth() {
             try {
-                const resUser = await fetch('/api/me');
-                if(resUser.ok) {
-                    const user = await resUser.json();
-                    document.getElementById('userNav').innerHTML = `
-                        <span style="font-weight:700;">${user.name}</span>
-                        <a href="/logout" class="btn-auth" style="border-color:#ef4444; color:#ef4444;">Çıkış</a>
+                const res = await fetch('/api/me');
+                const data = await res.json();
+                const authBox = document.getElementById('authBox');
+                if (data.authenticated && data.user) {
+                    const userName = data.user.name || data.user.given_name || "Kullanıcı";
+                    authBox.innerHTML = `
+                        <span style="font-weight: 600;">👤 ${userName}</span>
+                        <a href="/logout" class="btn-logout">Çıkış</a>
+                    `;
+                } else {
+                    authBox.innerHTML = `
+                        <a href="/login/google" class="btn-google">
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18"> Google ile Giriş
+                        </a>
                     `;
                 }
-            } catch(e) {}
-
-            // Donanımları Yükle
-            const res = await fetch('/api/components');
-            if(res.ok) {
-                allComponents = await res.json();
-                renderChart();
-                populateDropdowns();
+            } catch(e) {
+                console.error("Auth hatası", e);
             }
         }
 
-        function renderChart() {
-            const chart = document.getElementById('chartContainer');
-            // En yüksek skorlu ilk 8 donanımı chart yap
-            const topHardware = allComponents.slice(0, 8);
+        // --- SIRALAMA LİSTESİ ---
+        async function loadList(type = 'gpu') {
+            const tbody = document.getElementById('rankingTableBody');
+            tbody.innerHTML = '<tr><td colspan="5">Yükleniyor...</td></tr>';
+            
+            const endpoint = type === 'gpu' ? '/api/gpus' : '/api/cpus';
+            const res = await fetch(endpoint);
+            const items = await res.json();
 
-            chart.innerHTML = topHardware.map(item => `
-                <div class="chart-item brand-${item.brand}">
-                    <div class="chart-name">${item.brand} ${item.model}</div>
-                    <div class="chart-bar-bg">
-                        <div class="chart-bar-fill" style="width: ${item.score}%"></div>
-                    </div>
-                    <div class="chart-score">${item.score} Pts</div>
-                </div>
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td><strong>${item.isim}</strong></td>
+                    <td><span class="badge badge-${item.marka}">${item.marka}</span></td>
+                    <td><strong style="color:var(--accent-blue)">${item.puan}</strong></td>
+                    <td>${item.vram || item.cekirdek || '-'}</td>
+                    <td>${item.fiyat_performans}</td>
+                </tr>
             `).join('');
         }
 
-        function populateDropdowns() {
-            const fillSelect = (id, type) => {
-                const el = document.getElementById(id);
-                const items = allComponents.filter(c => c.type === type);
-                el.innerHTML = '<option value="">Seçiniz...</option>' + 
-                    items.map(i => `<option value="${i.id}">${i.brand} ${i.model} (${i.specs})</option>`).join('');
-            };
+        // --- DARBOĞAZ ---
+        async function checkBottleneck() {
+            const gpu = document.getElementById('bnGpu').value;
+            const cpu = document.getElementById('bnCpu').value;
+            const resBox = document.getElementById('bnResult');
+            if(!gpu || !cpu) return alert("Lütfen iki alanı da doldurun");
 
-            fillSelect('selectCpu', 'cpu');
-            fillSelect('selectGpu', 'gpu');
-            fillSelect('selectMobo', 'mobo');
-            fillSelect('selectRam', 'ram');
-            fillSelect('selectSsd', 'ssd');
-            fillSelect('selectPsu', 'psu');
-        }
+            resBox.style.display = 'block';
+            resBox.innerHTML = 'Hesaplanıyor...';
 
-        async function saveBuild() {
-            const title = document.getElementById('buildTitle').value;
-            const cpu_id = document.getElementById('selectCpu').value;
-            const gpu_id = document.getElementById('selectGpu').value;
-            const mobo_id = document.getElementById('selectMobo').value;
-            const ram_id = document.getElementById('selectRam').value;
-            const ssd_id = document.getElementById('selectSsd').value;
-            const psu_id = document.getElementById('selectPsu').value;
-
-            if(!title || !cpu_id || !gpu_id) {
-                alert("Lütfen en azından Sistem Adı, İşlemci ve Ekran Kartı seçin!");
+            const res = await fetch(`/api/bottleneck?gpu=${encodeURIComponent(gpu)}&cpu=${encodeURIComponent(cpu)}`);
+            if(!res.ok) {
+                resBox.innerHTML = '<span style="color:#f87171">Bileşenlerden biri bulunamadı.</span>';
                 return;
             }
-
-            const res = await fetch('/api/builds', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    title, 
-                    cpu_id: parseInt(cpu_id), 
-                    gpu_id: parseInt(gpu_id),
-                    mobo_id: parseInt(mobo_id) || 0,
-                    ram_id: parseInt(ram_id) || 0,
-                    ssd_id: parseInt(ssd_id) || 0,
-                    psu_id: parseInt(psu_id) || 0
-                })
-            });
-
-            if(res.ok) {
-                alert("Sisteminiz başarıyla kaydedildi!");
-                location.reload();
-            } else {
-                alert("Sistem kaydetmek için giriş yapmalısınız.");
-            }
+            const data = await res.json();
+            resBox.innerHTML = `
+                <div style="font-weight:bold; color:${data.renk}">${data.durum}</div>
+                <div>Darboğaz Oranı: <strong>${data.darbogaz_yuzdesi}</strong></div>
+            `;
         }
 
-        window.onload = init;
+        // --- OYUN KALDIRIR MI ---
+        async function checkCanIRun() {
+            const gpu = document.getElementById('cirGpu').value;
+            const cpu = document.getElementById('cirCpu').value;
+            const ram = document.getElementById('cirRam').value;
+            const game = document.getElementById('cirGame').value;
+            const resBox = document.getElementById('cirResult');
+
+            if(!gpu || !cpu) return alert("Lütfen kart ve işlemci girin");
+            resBox.style.display = 'block';
+            resBox.innerHTML = 'Test ediliyor...';
+
+            const res = await fetch(`/api/can-i-run?gpu=${encodeURIComponent(gpu)}&cpu=${encodeURIComponent(cpu)}&ram=${ram}&game=${game}`);
+            if(!res.ok) {
+                resBox.innerHTML = '<span style="color:#f87171">Bilgiler kontrol edilemedi.</span>';
+                return;
+            }
+            const data = await res.json();
+            resBox.innerHTML = `
+                <div style="font-weight:bold; color:${data.renk}">${data.oyun}: ${data.durum}</div>
+                <ul style="margin:5px 0 0 0; padding-left:20px; font-size:0.9rem;">
+                    ${data.detaylar.map(d => `<li>${d}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        // --- FPS TAHMİNİ ---
+        async function getFps() {
+            const gpu = document.getElementById('fpsGpu').value;
+            const resVal = document.getElementById('fpsRes').value;
+            const resBox = document.getElementById('fpsResult');
+
+            if(!gpu) return alert("Kart adı girin");
+            resBox.style.display = 'block';
+            resBox.innerHTML = 'FPS Hesaplanıyor...';
+
+            const res = await fetch(`/api/fps/${encodeURIComponent(gpu)}?res=${resVal}`);
+            if(!res.ok) {
+                resBox.innerHTML = '<span style="color:#f87171">Kart bulunamadı.</span>';
+                return;
+            }
+            const data = await res.json();
+            resBox.innerHTML = `
+                <div style="font-weight:bold; margin-bottom:5px;">${data.kart} (${data.cozunurluk})</div>
+                ${Object.entries(data.oyunlar).map(([g, fps]) => `<div>${g}: <strong>${fps}</strong></div>`).join('')}
+            `;
+        }
+
+        // --- GPU KARŞILAŞTIRMA ---
+        async function compareGpus() {
+            const g1 = document.getElementById('compGpu1').value;
+            const g2 = document.getElementById('compGpu2').value;
+            const resBox = document.getElementById('compResult');
+
+            if(!g1 || !g2) return alert("İki kart modelini de girin");
+            resBox.style.display = 'block';
+            resBox.innerHTML = 'Karşılaştırılıyor...';
+
+            const res = await fetch(`/api/karsilastir?gpu1=${encodeURIComponent(g1)}&gpu2=${encodeURIComponent(g2)}`);
+            if(!res.ok) {
+                resBox.innerHTML = '<span style="color:#f87171">Kartlardan biri veritabanında bulunamadı.</span>';
+                return;
+            }
+            const data = await res.json();
+            resBox.innerHTML = `
+                <div style="font-weight:bold; color:#34d399">🏆 Kazanan: ${data.kazanan}</div>
+                <div>Fark: ${data.puan_farki} Puan (${data.yuzde_fark})</div>
+            `;
+        }
+
+        // Başlangıç Yüklemeleri
+        checkAuth();
+        loadList('gpu');
     </script>
 </body>
 </html>
