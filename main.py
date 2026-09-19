@@ -36,7 +36,6 @@ NO_CACHE_HEADERS = {
 }
 
 def clean_query(text: str) -> str:
-    """Arama terimini boşluksuz ve harf küçültülmüş biçime dönüştürür."""
     return re.sub(r'[^a-zA-Z0-9]', '', text).lower()
 
 def check_admin(credentials: HTTPBasicCredentials = Depends(security)):
@@ -60,7 +59,7 @@ def is_in_maintenance():
 def startup_event():
     init_db()
 
-# --- HEALTH CHECK (UPTIMEROBOT PING) ---
+# --- HEALTH CHECK (UPTIMEROBOT) ---
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "service": "Hardware Lab"}
@@ -91,7 +90,12 @@ async def logout(request: Request):
 async def get_current_user(request: Request):
     user = request.session.get('user')
     if user:
-        return {"authenticated": True, "user": user}
+        # Front-end'in 'undefined' vermemesi için name bilgisini doğrudan iletiyoruz
+        return {
+            "authenticated": True, 
+            "user": user,
+            "name": user.get("name", user.get("given_name", "Kullanıcı"))
+        }
     return {"authenticated": False}
 
 # --- ANA SAYFA ---
@@ -243,47 +247,6 @@ def predict_fps(gpu_name: str, res: str = "1080p"):
     }
     return {"kart": bulunan["isim"], "cozunurluk": res.upper(), "oyunlar": fps_verileri}
 
-@app.get("/api/bottleneck")
-def calculate_bottleneck(gpu: str, cpu: str):
-    if is_in_maintenance():
-        raise HTTPException(status_code=503, detail="Sistem bakımdadır.")
-    conn = get_db_connection()
-    all_gpus = conn.execute("SELECT * FROM gpus").fetchall()
-    all_cpus = conn.execute("SELECT * FROM cpus").fetchall()
-    conn.close()
-
-    gpu_q, cpu_q = clean_query(gpu), clean_query(cpu)
-    gpu_obj = next((dict(g) for g in all_gpus if gpu_q in clean_query(g["isim"])), None)
-    cpu_obj = next((dict(c) for c in all_cpus if cpu_q in clean_query(c["isim"])), None)
-
-    if not gpu_obj or not cpu_obj:
-        raise HTTPException(status_code=404, detail="Bileşenlerden biri bulunamadı")
-
-    gpu_p, cpu_p = gpu_obj["puan"], cpu_obj["puan"]
-    # İdeal oran dengesi hesabı
-    ratio = gpu_p / cpu_p if cpu_p > 0 else 1
-    
-    if 0.7 <= ratio <= 1.3:
-        percentage = round(abs(1 - ratio) * 15, 1)
-        status_msg = "Mükemmel Uyum! Darboğaz bulunmuyor."
-        color = "#34d399"
-    elif ratio > 1.3:
-        percentage = min(85, round((ratio - 1.3) * 25, 1))
-        status_msg = f"İşlemci Darboğazı! Ekran kartınız ({gpu_obj['isim']}) işlemcinizden daha güçlü."
-        color = "#fbbf24" if percentage < 25 else "#f87171"
-    else:
-        percentage = min(85, round((1.0/ratio - 1.3) * 25, 1))
-        status_msg = f"Ekran Kartı Darboğazı! İşlemciniz ({cpu_obj['isim']}) ekran kartınızdan daha güçlü."
-        color = "#fbbf24" if percentage < 25 else "#f87171"
-
-    return {
-        "gpu": gpu_obj["isim"],
-        "cpu": cpu_obj["isim"],
-        "darbogaz_yuzdesi": f"%{percentage}",
-        "durum": status_msg,
-        "renk": color
-    }
-
 @app.get("/api/karsilastir")
 def compare_gpus(gpu1: str, gpu2: str):
     if is_in_maintenance():
@@ -297,7 +260,7 @@ def compare_gpus(gpu1: str, gpu2: str):
     k2 = next((dict(g) for g in all_gpus if g2_q in clean_query(g["isim"])), None)
     
     if not k1 or not k2:
-        raise HTTPException(status_code=404, detail="Kartlardan biri bulunamadı")
+        raise HTTPException(status_code=404, detail="Kartlerden biri bulunamadı")
         
     fark = abs(k1["puan"] - k2["puan"])
     yuzde = round((fark / min(k1["puan"], k2["puan"])) * 100, 1)
