@@ -35,12 +35,12 @@ def init_db():
     )
     """)
 
-    # Kullanıcı Değerlendirmeleri (Google Oylama) Tablosu
+    # Oy Sistem Tablosu
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS oy_sistemi (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_email TEXT NOT NULL,
-        donanim_tipi TEXT NOT NULL, -- 'gpu' veya 'cpu'
+        donanim_tipi TEXT NOT NULL,
         donanim_id INTEGER NOT NULL,
         puan INTEGER NOT NULL,
         UNIQUE(user_email, donanim_tipi, donanim_id)
@@ -70,7 +70,7 @@ def init_db():
     """)
     cursor.execute("INSERT OR IGNORE INTO ayarlar (anahtar, deger) VALUES ('bakim_modu', '0')")
 
-    # Başlangıç Verilerini Ekle (Genişletilmiş Parça Listesi)
+    # Başlangıç Verileri
     gpu_count = cursor.execute("SELECT COUNT(*) FROM gpus").fetchone()[0]
     if gpu_count == 0:
         gpus = [
