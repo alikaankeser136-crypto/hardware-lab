@@ -85,7 +85,7 @@
         .badge-intel { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
 
         .result-box { margin-top: 15px; padding: 15px; border-radius: 10px; background: rgba(13, 19, 34, 0.8); display: none; }
-        .rate-btn { padding: 2px 6px; font-size: 0.75rem; width: auto; margin: 0; background: #334155; cursor: pointer; border: none; }
+        .rate-btn { padding: 6px 12px; font-size: 0.8rem; width: auto; margin: 0; background: #0284c7; color: white; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -98,7 +98,7 @@
     <div class="container">
 
         <!-- Performans Sıralaması -->
-        <div class="section-title">🔥 Performans Sıralaması ve Google Oy Verme</div>
+        <div class="section-title">🔥 Performans Sıralaması</div>
         <div class="card">
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <button onclick="loadList('gpu')" class="action-btn" style="margin:0;">Ekran Kartları (GPU)</button>
@@ -112,7 +112,7 @@
                         <th>Puan</th>
                         <th>Detay</th>
                         <th>F/P</th>
-                        <th>Google Oy Ver</th>
+                        <th>Değerlendir</th>
                     </tr>
                 </thead>
                 <tbody id="rankingTableBody"></tbody>
@@ -171,7 +171,7 @@
             <!-- CPU ve GPU Karşılaştırma -->
             <div class="card">
                 <div class="section-title">⚔️ Donanım Karşılaştırma</div>
-                <select id="compType" onchange="toggleCompType()">
+                <select id="compType">
                     <option value="gpu">Ekran Kartı (GPU) Karşılaştır</option>
                     <option value="cpu">İşlemci (CPU) Karşılaştır</option>
                 </select>
@@ -216,7 +216,6 @@
             globalGpus = await gpuRes.json();
             globalCpus = await cpuRes.json();
 
-            // Sistem toplayıcı dropdown'larını doldur
             document.getElementById('pcGpu').innerHTML = globalGpus.map(g => `<option value="${g.id}">${g.isim}</option>`).join('');
             document.getElementById('pcCpu').innerHTML = globalCpus.map(c => `<option value="${c.id}">${c.isim}</option>`).join('');
 
@@ -235,11 +234,25 @@
                     <td>${item.vram || item.cekirdek || '-'}</td>
                     <td>${item.fiyat_performans}</td>
                     <td>
-                        <button class="rate-btn" onclick="rateItem('${type}', ${item.id}, 5)">⭐ 5</button>
-                        <button class="rate-btn" onclick="rateItem('${type}', ${item.id}, 4)">⭐ 4</button>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <select id="rating-${type}-${item.id}" style="width: 75px; padding: 4px; margin: 0; font-size: 0.85rem;">
+                                <option value="5">⭐ 5</option>
+                                <option value="4">⭐ 4</option>
+                                <option value="3">⭐ 3</option>
+                                <option value="2">⭐ 2</option>
+                                <option value="1">⭐ 1</option>
+                            </select>
+                            <button class="rate-btn" onclick="submitRating('${type}', ${item.id})">Oy Ver</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        async function submitRating(type, id) {
+            const selectElem = document.getElementById(`rating-${type}-${id}`);
+            const rating = selectElem.value;
+            await rateItem(type, id, rating);
         }
 
         async function rateItem(type, id, rating) {
