@@ -1,112 +1,146 @@
+import os
 import sqlite3
 
-def get_db():
-    conn = sqlite3.connect("hardware.db")
+# Render Persistent Disk desteği: DATA_DIR varsa oraya kaydeder
+DATA_DIR = os.getenv("DATA_DIR", ".")
+DB_NAME = os.path.join(DATA_DIR, "donanim.db")
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    conn = get_db()
+    conn = get_db_connection()
     cursor = conn.cursor()
-    
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE, name TEXT, picture TEXT)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS components (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, brand TEXT, model TEXT, score INTEGER, specs TEXT)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, component_id INTEGER, user_id TEXT, rating INTEGER, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS user_builds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, title TEXT, cpu_id INTEGER, gpu_id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    
-    cursor.execute("SELECT COUNT(*) FROM components")
-    if cursor.fetchone()[0] < 100:
-        cursor.execute("DELETE FROM components")
-        hardware_list = [
-            ('gpu', 'NVIDIA', 'GeForce RTX 4090', 100, '24 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4080 Super', 94, '16 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4080', 92, '16 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4070 Ti Super', 88, '16 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4070 Ti', 85, '12 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4070 Super', 82, '12 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4070', 78, '12 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4060 Ti 16GB', 72, '16 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4060 Ti 8GB', 70, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 4060', 65, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3090 Ti', 86, '24 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3090', 83, '24 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3080 Ti', 81, '12 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3080 12GB', 79, '12 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3080 10GB', 77, '10 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3070 Ti', 71, '8 GB GDDR6X'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3070', 68, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3060 Ti', 63, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3060 12GB', 55, '12 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3050 8GB', 42, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 3050 6GB', 36, '6 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 2080 Ti', 69, '11 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 2080 Super', 62, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 2080', 58, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 2070 Super', 57, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 2070', 52, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 2060 Super', 50, '8 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce RTX 2060 6GB', 45, '6 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce GTX 1660 Ti', 38, '6 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce GTX 1660 Super', 37, '6 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce GTX 1660', 33, '6 GB GDDR5'),
-            ('gpu', 'NVIDIA', 'GeForce GTX 1650 Super', 30, '4 GB GDDR6'),
-            ('gpu', 'NVIDIA', 'GeForce GTX 1650', 24, '4 GB GDDR5'),
-            ('gpu', 'NVIDIA', 'GeForce GTX 1080 Ti', 54, '11 GB GDDR5X'),
-            ('gpu', 'AMD', 'Radeon RX 7900 XTX', 93, '24 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 7900 XT', 87, '20 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 7900 GRE', 80, '16 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 7800 XT', 76, '16 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 7700 XT', 69, '12 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 7600 XT', 56, '16 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 7600', 52, '8 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6950 XT', 82, '16 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6900 XT', 79, '16 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6800 XT', 74, '16 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6800', 67, '16 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6750 XT', 62, '12 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6700 XT', 60, '12 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6650 XT', 53, '8 GB GDDR6'),
-            ('gpu', 'AMD', 'Radeon RX 6600', 46, '8 GB GDDR6'),
-            ('gpu', 'Intel', 'Arc A770 16GB', 54, '16 GB GDDR6'),
-            ('gpu', 'Intel', 'Arc A750', 49, '8 GB GDDR6'),
-            ('cpu', 'AMD', 'Ryzen 9 7950X3D', 98, '16C / 32T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 9 7950X', 96, '16C / 32T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 9 7900X3D', 93, '12C / 24T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 9 7900X', 91, '12C / 24T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 7 7800X3D', 97, '8C / 16T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 7 7700X', 86, '8C / 16T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 5 7600X', 80, '6C / 12T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 5 7500F', 77, '6C / 12T - AM5'),
-            ('cpu', 'AMD', 'Ryzen 7 5800X3D', 85, '8C / 16T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 7 5700X3D', 82, '8C / 16T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 9 5950X', 89, '16C / 32T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 9 5900X', 84, '12C / 24T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 7 5800X', 76, '8C / 16T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 7 5700X', 74, '8C / 16T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 5 5600X', 70, '6C / 12T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 5 5600', 68, '6C / 12T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 5 5500', 60, '6C / 12T - AM4'),
-            ('cpu', 'AMD', 'Ryzen 5 3600', 55, '6C / 12T - AM4'),
-            ('cpu', 'Intel', 'Core i9-14900KS', 100, '24C / 32T - LGA1700'),
-            ('cpu', 'Intel', 'Core i9-14900K', 99, '24C / 32T - LGA1700'),
-            ('cpu', 'Intel', 'Core i7-14700K', 94, '20C / 28T - LGA1700'),
-            ('cpu', 'Intel', 'Core i5-14600K', 87, '14C / 20T - LGA1700'),
-            ('cpu', 'Intel', 'Core i5-14400F', 73, '10C / 16T - LGA1700'),
-            ('cpu', 'Intel', 'Core i3-14100F', 58, '4C / 8T - LGA1700'),
-            ('cpu', 'Intel', 'Core i9-13900KS', 97, '24C / 32T - LGA1700'),
-            ('cpu', 'Intel', 'Core i9-13900K', 95, '24C / 32T - LGA1700'),
-            ('cpu', 'Intel', 'Core i7-13700K', 90, '16C / 24T - LGA1700'),
-            ('cpu', 'Intel', 'Core i5-13600K', 83, '14C / 20T - LGA1700'),
-            ('cpu', 'Intel', 'Core i5-13400F', 71, '10C / 16T - LGA1700'),
-            ('cpu', 'Intel', 'Core i3-13100F', 55, '4C / 8T - LGA1700'),
-            ('cpu', 'Intel', 'Core i9-12900K', 88, '16C / 24T - LGA1700'),
-            ('cpu', 'Intel', 'Core i7-12700K', 81, '12C / 20T - LGA1700'),
-            ('cpu', 'Intel', 'Core i5-12600K', 75, '10C / 16T - LGA1700'),
-            ('cpu', 'Intel', 'Core i5-12400F', 66, '6C / 12T - LGA1700'),
-            ('cpu', 'Intel', 'Core i3-12100F', 52, '4C / 8T - LGA1700'),
-            ('cpu', 'Intel', 'Core i7-3632QM', 18, '4C / 8T - Vaio Laptop')
+
+    # Ekran Kartları Tablosu
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS gpus (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            isim TEXT NOT NULL,
+            puan INTEGER NOT NULL,
+            marka TEXT NOT NULL,
+            vram TEXT NOT NULL,
+            fiyat_performans TEXT NOT NULL
+        )
+    ''')
+
+    # İşlemciler Tablosu
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cpus (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            isim TEXT NOT NULL,
+            puan INTEGER NOT NULL,
+            marka TEXT NOT NULL,
+            cekirdek TEXT NOT NULL,
+            fiyat_performans TEXT NOT NULL
+        )
+    ''')
+
+    # Oyun Gereksinimleri Tablosu
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS oyunlar (
+            kod TEXT PRIMARY KEY,
+            isim TEXT NOT NULL,
+            gpu_min INTEGER NOT NULL,
+            cpu_min INTEGER NOT NULL,
+            ram_min INTEGER NOT NULL,
+            gpu_rec INTEGER NOT NULL,
+            cpu_rec INTEGER NOT NULL,
+            ram_rec INTEGER NOT NULL
+        )
+    ''')
+
+    # Ayarlar / Bakım Modu Tablosu
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ayarlar (
+            anahtar TEXT PRIMARY KEY,
+            deger TEXT NOT NULL
+        )
+    ''')
+
+    # Varsayılan Bakım Modu Değeri
+    cursor.execute("SELECT COUNT(*) FROM ayarlar WHERE anahtar = 'bakim_modu'")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO ayarlar VALUES ('bakim_modu', '0')")
+
+    # Başlangıç GPU verileri
+    cursor.execute("SELECT COUNT(*) FROM gpus")
+    if cursor.fetchone()[0] == 0:
+        gpus_data = [
+            ("Nvidia RTX 4090", 38800, "nvidia", "24 GB", "7/10"),
+            ("AMD Radeon RX 7900 XTX", 31000, "amd", "24 GB", "8.5/10"),
+            ("Nvidia RTX 4080 Super", 34500, "nvidia", "16 GB", "8/10"),
+            ("AMD Radeon RX 7800 XT", 19500, "amd", "16 GB", "9.2/10"),
+            ("Nvidia RTX 4070 Ti Super", 24200, "nvidia", "16 GB", "8.2/10"),
+            ("Nvidia RTX 4060 Ti", 13800, "nvidia", "8 GB", "8/10"),
+            ("AMD Radeon RX 6700 XT", 12800, "amd", "12 GB", "9.5/10"),
+            ("Nvidia RTX 4060", 10500, "nvidia", "8 GB", "8.8/10"),
+            ("AMD Radeon RX 7600", 10200, "amd", "8 GB", "8.7/10"),
+            ("Nvidia RTX 3060", 8700, "nvidia", "12 GB", "9/10"),
+            ("Nvidia RTX 2060", 7500, "nvidia", "6 GB", "8.5/10"),
+            ("AMD Radeon RX 6600", 8100, "amd", "8 GB", "9.8/10"),
+            ("Nvidia GTX 1650", 3500, "nvidia", "4 GB", "6/10")
         ]
-        cursor.executemany("INSERT INTO components (type, brand, model, score, specs) VALUES (?, ?, ?, ?, ?)", hardware_list)
+        cursor.executemany("INSERT INTO gpus (isim, puan, marka, vram, fiyat_performans) VALUES (?, ?, ?, ?, ?)", gpus_data)
+
+    # Başlangıç CPU verileri
+    cursor.execute("SELECT COUNT(*) FROM cpus")
+    if cursor.fetchone()[0] == 0:
+        cpus_data = [
+            ("AMD Ryzen 7 7800X3D", 35500, "amd", "8 Çekirdek / 16 İzlek", "10/10"),
+            ("Intel Core i9-14900K", 62400, "intel", "24 Çekirdek / 32 İzlek", "7.5/10"),
+            ("Intel Core i7-13700K", 46500, "intel", "16 Çekirdek / 24 İzlek", "8.5/10"),
+            ("Intel Core i5-13600K", 38200, "intel", "14 Çekirdek / 20 İzlek", "9.2/10"),
+            ("AMD Ryzen 7 7700X", 36100, "amd", "8 Çekirdek / 16 İzlek", "8.8/10"),
+            ("AMD Ryzen 5 7600X", 28500, "amd", "6 Çekirdek / 12 İzlek", "9.5/10"),
+            ("AMD Ryzen 5 5600", 21800, "amd", "6 Çekirdek / 12 İzlek", "10/10"),
+            ("Intel Core i5-12400F", 19800, "intel", "6 Çekirdek / 12 İzlek", "9.6/10"),
+            ("Intel Core i3-12100F", 14200, "intel", "4 Çekirdek / 8 İzlek", "9/10")
+        ]
+        cursor.executemany("INSERT INTO cpus (isim, puan, marka, cekirdek, fiyat_performans) VALUES (?, ?, ?, ?, ?)", cpus_data)
+
+    # Ek kayıtlar
+    additional_gpus = [
+        ("Nvidia RTX 5090", 52000, "nvidia", "32 GB", "6.5/10"),
+        ("Nvidia RTX 5080", 42000, "nvidia", "16 GB", "7.5/10"),
+        ("Nvidia RTX 5070 Ti", 33500, "nvidia", "16 GB", "8.5/10"),
+        ("Nvidia RTX 5070", 29500, "nvidia", "12 GB", "8.8/10"),
+        ("Nvidia RTX 5060 Ti 16GB", 22500, "nvidia", "16 GB", "9/10"),
+        ("Nvidia RTX 5060", 19000, "nvidia", "8 GB", "9/10"),
+        ("AMD Radeon RX 9070 XT", 35000, "amd", "16 GB", "9.2/10"),
+        ("AMD Radeon RX 9070", 31500, "amd", "16 GB", "9.3/10"),
+        ("AMD Radeon RX 7900 XT", 28500, "amd", "20 GB", "8.8/10")
+    ]
+
+    for gpu in additional_gpus:
+        exists = cursor.execute("SELECT 1 FROM gpus WHERE isim = ? LIMIT 1", (gpu[0],)).fetchone()
+        if not exists:
+            cursor.execute("INSERT INTO gpus (isim, puan, marka, vram, fiyat_performans) VALUES (?, ?, ?, ?, ?)", gpu)
+
+    additional_cpus = [
+        ("AMD Ryzen 9 9950X", 65000, "amd", "16 Çekirdek / 32 İzlek", "8/10"),
+        ("AMD Ryzen 9 9900X", 55500, "amd", "12 Çekirdek / 24 İzlek", "8.5/10"),
+        ("AMD Ryzen 7 9800X3D", 58500, "amd", "8 Çekirdek / 16 İzlek", "10/10"),
+        ("Intel Core Ultra 9 285K", 67500, "intel", "24 Çekirdek / 24 İzlek", "7.5/10")
+    ]
+
+    for cpu in additional_cpus:
+        exists = cursor.execute("SELECT 1 FROM cpus WHERE isim = ? LIMIT 1", (cpu[0],)).fetchone()
+        if not exists:
+            cursor.execute("INSERT INTO cpus (isim, puan, marka, cekirdek, fiyat_performans) VALUES (?, ?, ?, ?, ?)", cpu)
+
+    cursor.execute("SELECT COUNT(*) FROM oyunlar")
+    if cursor.fetchone()[0] == 0:
+        oyunlar_data = [
+            ("valorant", "Valorant", 3000, 10000, 8, 7000, 18000, 16),
+            ("cs2", "Counter-Strike 2", 4500, 12000, 8, 8500, 20000, 16),
+            ("cyberpunk", "Cyberpunk 2077", 8000, 18000, 12, 19000, 30000, 16),
+            ("gtav", "GTA V / Online", 3000, 8000, 8, 7000, 15000, 16),
+            ("rdr2", "Red Dead Redemption 2", 7000, 15000, 12, 13000, 25000, 16)
+        ]
+        cursor.executemany("INSERT INTO oyunlar VALUES (?, ?, ?, ?, ?, ?, ?, ?)", oyunlar_data)
 
     conn.commit()
     conn.close()
